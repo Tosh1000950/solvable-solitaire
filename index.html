@@ -28,6 +28,9 @@
     font-size:clamp(12px,3vw,14px); margin:8px 0 2px;
   }
   .stats b{ font-variant-numeric: tabular-nums; }
+  .stats b.nodebadge{
+    background:#f5c542; color:#3a2c00; border-radius:999px; padding:0 8px;
+  }
   .controls{ display:flex; justify-content:center; gap:6px; flex-wrap:wrap; padding:6px 8px 10px; }
   .controls button{
     border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff;
@@ -124,7 +127,9 @@
   <div class="stats">
     <span><span data-i18n="stat_deal">配布番号</span> <b id="st-seed">-</b></span>
     <span><span data-i18n="stat_diff">難易度</span> <b id="st-diff">ふつう</b></span>
+    <span id="stat-nodes-wrap"><span data-i18n="stat_nodes">探索量</span> <b id="st-nodes" class="nodebadge">-</b></span>
     <span><span data-i18n="stat_moves">手数</span> <b id="st-moves">0</b></span>
+    <span id="stat-par-wrap"><span data-i18n="stat_par">PAR</span> <b id="st-par">-</b></span>
     <span><span data-i18n="stat_time">時間</span> <b id="st-time">0:00</b></span>
     <span><span data-i18n="stat_found">組札</span> <b id="st-found">0</b>/52</span>
   </div>
@@ -154,6 +159,7 @@
   <div class="panel">
     <h2 id="win-title">🎉 クリア！</h2>
     <p id="win-detail"></p>
+    <p id="win-par"></p>
     <p data-i18n="win_note">この配布にも、ちゃんと解法がありました。</p>
     <button id="btn-win-new" data-i18n="btn_win_new">新しい配布で遊ぶ</button>
   </div>
@@ -270,6 +276,8 @@ function dealFromSeed(seed) {
 }
 /* 検証済みシードプール（ビルド時に差し込む） */
 const POOLS = {"normal":[200001,200002,200003,200004,200005,200006,200007,200010,200014,200016,200017,200021,200022,200025,200029,200031,200032,200033,200035,200037,200038,200040,200041,200042,200044,200045,200046,200047,200049,200050,200051,200057,200058,200059,200060,200063,200064,200065,200069,200070,200071,200073,200074,200076,200078,200080,200081,200085,200087,200088,200089,200090,200091,200092,200094,200095,200096,200101,200102,200110,200111,200112,200114,200116,200117,200118,200119,200124,200126,200129,200132,200133,200134,200136,200142,200150,200153,200154,200155,200157,200160,200161,200162,200164,200165,200166,200169,200170,200174,200179,200180,200181,200184,200185,200186,200187,200188,200190,200191,200194,200195,200196,200197,200198,200199,200200,200202,200204,200205,200209,200211,200215,200217,200218,200220,200221,200223,200225,200227,200228],"hard":[200052,200054,200068,200104,200120,200127,200147,200151,200168,200176,200222,200226,200232,200241,200246,200248,200255,200257,200263,200292,200303,200344,200345,200371,200387,200393,200398,200405,200407,200435,200448,200451,200457,200458,200471,200492,200516,200549,200561,200565,200598,200606,200612,200615,200616,200629,200635,200643,200666,200669]};
+/* プール各配布の探索ノード数とPAR（pools.json と一致。[nodes, par]） */
+const POOL_META = {200001:[627,133],200002:[749,133],200003:[620,124],200004:[2795,113],200005:[1011,113],200006:[387,119],200007:[891,123],200010:[668,124],200014:[850,117],200016:[315,132],200017:[512,132],200021:[946,123],200022:[573,133],200025:[485,125],200029:[450,150],200031:[2702,149],200032:[341,142],200033:[232,113],200035:[415,103],200037:[574,139],200038:[922,120],200040:[1066,130],200041:[869,120],200042:[484,121],200044:[604,141],200045:[341,124],200046:[761,129],200047:[480,118],200049:[1523,128],200050:[2237,126],200051:[2205,133],200057:[251,126],200058:[337,128],200059:[555,128],200060:[1457,143],200063:[241,114],200064:[788,142],200065:[362,120],200069:[834,116],200070:[716,119],200071:[360,141],200073:[322,104],200074:[1782,150],200076:[974,134],200078:[586,117],200080:[679,126],200081:[331,112],200085:[586,129],200087:[961,118],200088:[560,110],200089:[1852,114],200090:[632,118],200091:[739,119],200092:[980,153],200094:[704,124],200095:[611,118],200096:[1567,126],200101:[401,128],200102:[2099,138],200110:[1099,106],200111:[272,123],200112:[258,121],200114:[1059,116],200116:[437,128],200117:[523,112],200118:[1621,114],200119:[370,120],200124:[1078,135],200126:[1540,120],200129:[360,114],200132:[271,114],200133:[1305,157],200134:[426,133],200136:[997,116],200142:[630,119],200150:[847,118],200153:[1540,127],200154:[1571,113],200155:[534,140],200157:[722,129],200160:[434,130],200161:[524,117],200162:[221,114],200164:[623,112],200165:[2290,127],200166:[907,114],200169:[3221,106],200170:[577,117],200174:[240,105],200179:[1057,114],200180:[1084,139],200181:[1241,119],200184:[1271,133],200185:[732,124],200186:[1625,137],200187:[326,128],200188:[367,128],200190:[670,126],200191:[550,140],200194:[2048,130],200195:[518,135],200196:[728,128],200197:[968,121],200198:[738,143],200199:[599,117],200200:[471,112],200202:[430,109],200204:[367,128],200205:[474,124],200209:[186,132],200211:[871,116],200215:[1020,148],200217:[1647,126],200218:[873,141],200220:[604,114],200221:[405,122],200223:[721,157],200225:[2095,119],200227:[662,133],200228:[1150,119],200052:[14987,112],200054:[7853,127],200068:[9059,131],200104:[6342,111],200120:[6078,122],200127:[20280,115],200147:[33137,114],200151:[40394,132],200168:[23706,131],200176:[13590,122],200222:[18744,135],200226:[44815,123],200232:[20253,116],200241:[13924,123],200246:[10663,132],200248:[30426,130],200255:[24429,123],200257:[21165,141],200263:[11349,125],200292:[25193,135],200303:[10389,122],200344:[7969,110],200345:[13076,138],200371:[55581,149],200387:[15195,124],200393:[8869,136],200398:[28929,144],200405:[25056,151],200407:[10615,122],200435:[16537,118],200448:[7995,127],200451:[35737,116],200457:[24764,122],200458:[52979,119],200471:[33839,131],200492:[17320,137],200516:[37866,145],200549:[9624,156],200561:[26987,117],200565:[47903,133],200598:[19396,133],200606:[40514,139],200612:[37545,115],200615:[52181,150],200616:[41828,120],200629:[21871,133],200635:[53065,138],200643:[12046,125],200666:[9402,126],200669:[30687,116]};
 
 function canPlaceOnTableau(card, destPile) {
   if (!destPile.length) return card.rank === 13;
@@ -305,7 +313,7 @@ const I18N = {
     meta_desc: "詰む配布を排除したクロンダイク・ソリティア。すべての配布に解法が存在します（1枚引き）。",
     app_title: "必ず解けるソリティア",
     app_sub: "詰む配布は出しません。すべての配布に解法があります（クロンダイク／1枚引き）",
-    stat_deal: "配布番号", stat_diff: "難易度", stat_moves: "手数", stat_time: "時間", stat_found: "組札",
+    stat_deal: "配布番号", stat_diff: "難易度", stat_moves: "手数", stat_time: "時間", stat_found: "組札", stat_nodes: "探索量", stat_par: "PAR",
     diff_easy: "かんたん", diff_easy_btn: "かんたん（練習）", diff_normal: "ふつう", diff_hard: "むずかしい",
     btn_new: "新しい配布", btn_restart: "やり直し", btn_undo: "一手戻す", btn_hint: "ヒント", btn_auto: "自動回収",
     win_title: "クリア！", win_note: "この配布にも、ちゃんと解法がありました。", btn_win_new: "新しい配布で遊ぶ",
@@ -320,6 +328,9 @@ const I18N = {
     msg_deal_verified: "配布番号 #{seed} ― 解法の存在を検証済みの配布です（{diff}）。",
     msg_stock_recycled: "山札を裏返しました。",
     win_detail: "配布番号 #{seed} ・ 手数 {moves} ・ 時間 {time}",
+    win_par_beat: "🏆 ソルバーのPAR {par} 手を {diff} 手下回りました！",
+    win_par_tie: "ソルバーのPAR {par} 手とぴったり同手数でした。",
+    win_par_over: "ソルバーのPARは {par} 手でした（あと {diff} 手）。",
     hint_to_foundation_flip: "{card} を組札へ。裏向きのカードがめくれます。",
     hint_move_stack_flip: "{card} の列を動かすと裏向きのカードがめくれます。",
     hint_waste_to_foundation: "捨て札の {card} を組札へ置けます。",
@@ -343,7 +354,7 @@ const I18N = {
     meta_desc: "Klondike solitaire with no dead deals. Every deal has a solution (draw 1).",
     app_title: "Guaranteed Solvable Solitaire",
     app_sub: "No dead deals. Every deal has a solution (Klondike / Draw 1).",
-    stat_deal: "Deal", stat_diff: "Difficulty", stat_moves: "Moves", stat_time: "Time", stat_found: "Foundation",
+    stat_deal: "Deal", stat_diff: "Difficulty", stat_moves: "Moves", stat_time: "Time", stat_found: "Foundation", stat_nodes: "Search nodes", stat_par: "PAR",
     diff_easy: "Easy", diff_easy_btn: "Easy (Practice)", diff_normal: "Normal", diff_hard: "Hard",
     btn_new: "New Deal", btn_restart: "Restart", btn_undo: "Undo", btn_hint: "Hint", btn_auto: "Auto-Collect",
     win_title: "You Win!", win_note: "As promised, this deal had a solution too.", btn_win_new: "Play a New Deal",
@@ -358,6 +369,9 @@ const I18N = {
     msg_deal_verified: "Deal #{seed} — a verified deal with a guaranteed solution ({diff}).",
     msg_stock_recycled: "Turned the waste pile back into the stock.",
     win_detail: "Deal #{seed} · Moves {moves} · Time {time}",
+    win_par_beat: "🏆 PAR is {par} — you came in {diff} under PAR!",
+    win_par_tie: "You matched the solver's PAR of {par} exactly.",
+    win_par_over: "The solver's PAR was {par} — you came in {diff} over.",
     hint_to_foundation_flip: "Move {card} to the foundation. It flips a face-down card.",
     hint_move_stack_flip: "Moving the {card} stack flips a face-down card.",
     hint_waste_to_foundation: "You can move the waste {card} to the foundation.",
@@ -381,7 +395,7 @@ const I18N = {
     meta_desc: "不会发死局的克朗代克接龙。每一局都有解法（抽1张）。",
     app_title: "保证有解的接龙纸牌",
     app_sub: "不会发死局。每一局都有解法（克朗代克／抽1张）。",
-    stat_deal: "局号", stat_diff: "难度", stat_moves: "步数", stat_time: "时间", stat_found: "基础牌",
+    stat_deal: "局号", stat_diff: "难度", stat_moves: "步数", stat_time: "时间", stat_found: "基础牌", stat_nodes: "搜索节点", stat_par: "PAR",
     diff_easy: "简单", diff_easy_btn: "简单（练习）", diff_normal: "普通", diff_hard: "困难",
     btn_new: "新局", btn_restart: "重新开始", btn_undo: "撤销一步", btn_hint: "提示", btn_auto: "自动收牌",
     win_title: "过关！", win_note: "这一局也确实有解法。", btn_win_new: "再来一局",
@@ -396,6 +410,9 @@ const I18N = {
     msg_deal_verified: "第 #{seed} 局 — 已验证有解法的牌局（{diff}）。",
     msg_stock_recycled: "已把废牌堆翻回牌堆。",
     win_detail: "局号 #{seed} · 步数 {moves} · 时间 {time}",
+    win_par_beat: "🏆 比求解器的 PAR（{par} 步）少用了 {diff} 步！",
+    win_par_tie: "与求解器的 PAR（{par} 步）步数完全相同。",
+    win_par_over: "求解器的 PAR 为 {par} 步（相差 {diff} 步）。",
     hint_to_foundation_flip: "把 {card} 移到基础牌叠，可以翻开一张暗牌。",
     hint_move_stack_flip: "移动 {card} 这一列，可以翻开一张暗牌。",
     hint_waste_to_foundation: "可以把废牌堆的 {card} 移到基础牌叠。",
@@ -419,7 +436,7 @@ const I18N = {
     meta_desc: "Solitario Klondike sin repartos imposibles. Todos los repartos tienen solución (robo de 1 carta).",
     app_title: "Solitario siempre resoluble",
     app_sub: "Sin repartos imposibles. Todos tienen solución (Klondike / robo de 1).",
-    stat_deal: "Reparto", stat_diff: "Dificultad", stat_moves: "Movimientos", stat_time: "Tiempo", stat_found: "Fundación",
+    stat_deal: "Reparto", stat_diff: "Dificultad", stat_moves: "Movimientos", stat_time: "Tiempo", stat_found: "Fundación", stat_nodes: "Nodos de búsqueda", stat_par: "PAR",
     diff_easy: "Fácil", diff_easy_btn: "Fácil (práctica)", diff_normal: "Normal", diff_hard: "Difícil",
     btn_new: "Nuevo reparto", btn_restart: "Reiniciar", btn_undo: "Deshacer", btn_hint: "Pista", btn_auto: "Recogida auto",
     win_title: "¡Ganaste!", win_note: "Este reparto también tenía solución, como debe ser.", btn_win_new: "Jugar otro reparto",
@@ -434,6 +451,9 @@ const I18N = {
     msg_deal_verified: "Reparto #{seed} — reparto verificado con solución garantizada ({diff}).",
     msg_stock_recycled: "Se ha dado la vuelta al descarte para reutilizarlo como mazo.",
     win_detail: "Reparto #{seed} · Movimientos {moves} · Tiempo {time}",
+    win_par_beat: "🏆 ¡Terminaste {diff} por debajo del PAR del solucionador ({par})!",
+    win_par_tie: "Igualaste exactamente el PAR del solucionador ({par}).",
+    win_par_over: "El PAR del solucionador era {par} (quedaste {diff} por encima).",
     hint_to_foundation_flip: "Mueve {card} a la fundación. Se volteará una carta boca abajo.",
     hint_move_stack_flip: "Mover la columna de {card} voltea una carta boca abajo.",
     hint_waste_to_foundation: "Puedes mover el {card} del descarte a la fundación.",
@@ -457,7 +477,7 @@ const I18N = {
     meta_desc: "Пасьянс «Косынка» без тупиковых раздач. У каждой раздачи есть решение (тянуть по 1 карте).",
     app_title: "Всегда решаемый пасьянс",
     app_sub: "Тупиковых раздач не бывает. У каждой раздачи есть решение (Косынка / по 1 карте).",
-    stat_deal: "Раздача", stat_diff: "Сложность", stat_moves: "Ходы", stat_time: "Время", stat_found: "Дом",
+    stat_deal: "Раздача", stat_diff: "Сложность", stat_moves: "Ходы", stat_time: "Время", stat_found: "Дом", stat_nodes: "Узлы поиска", stat_par: "PAR",
     diff_easy: "Лёгкий", diff_easy_btn: "Лёгкий (тренировка)", diff_normal: "Обычный", diff_hard: "Сложный",
     btn_new: "Новая раздача", btn_restart: "Заново", btn_undo: "Ход назад", btn_hint: "Подсказка", btn_auto: "Автосбор",
     win_title: "Победа!", win_note: "И у этой раздачи, как и обещано, было решение.", btn_win_new: "Играть новую раздачу",
@@ -472,6 +492,9 @@ const I18N = {
     msg_deal_verified: "Раздача #{seed} — проверенная раздача с гарантированным решением ({diff}).",
     msg_stock_recycled: "Отбой перевёрнут обратно в колоду.",
     win_detail: "Раздача #{seed} · Ходов: {moves} · Время: {time}",
+    win_par_beat: "🏆 Вы обыграли PAR решателя ({par})! Разница: {diff}.",
+    win_par_tie: "Вы в точности повторили PAR решателя ({par}).",
+    win_par_over: "PAR решателя — {par}. Разница: {diff}.",
     hint_to_foundation_flip: "Отправьте {card} в дом. Откроется карта, лежащая рубашкой вверх.",
     hint_move_stack_flip: "Если переместить стопку {card}, откроется карта рубашкой вверх.",
     hint_waste_to_foundation: "Карту {card} из отбоя можно отправить в дом.",
@@ -495,7 +518,7 @@ const I18N = {
     meta_desc: "Paciência Klondike sem distribuições impossíveis. Toda distribuição tem solução (comprar 1 carta).",
     app_title: "Paciência sempre solucionável",
     app_sub: "Sem distribuições impossíveis. Todas têm solução (Klondike / comprar 1).",
-    stat_deal: "Distribuição", stat_diff: "Dificuldade", stat_moves: "Jogadas", stat_time: "Tempo", stat_found: "Fundação",
+    stat_deal: "Distribuição", stat_diff: "Dificuldade", stat_moves: "Jogadas", stat_time: "Tempo", stat_found: "Fundação", stat_nodes: "Nós de busca", stat_par: "PAR",
     diff_easy: "Fácil", diff_easy_btn: "Fácil (treino)", diff_normal: "Normal", diff_hard: "Difícil",
     btn_new: "Nova distribuição", btn_restart: "Recomeçar", btn_undo: "Desfazer", btn_hint: "Dica", btn_auto: "Recolher auto",
     win_title: "Você venceu!", win_note: "Esta distribuição também tinha solução, como prometido.", btn_win_new: "Jogar nova distribuição",
@@ -510,6 +533,9 @@ const I18N = {
     msg_deal_verified: "Distribuição #{seed} — distribuição verificada com solução garantida ({diff}).",
     msg_stock_recycled: "O descarte foi virado de volta para o monte.",
     win_detail: "Distribuição #{seed} · Jogadas {moves} · Tempo {time}",
+    win_par_beat: "🏆 Você bateu o PAR do solucionador ({par})! Diferença: {diff}.",
+    win_par_tie: "Você igualou exatamente o PAR do solucionador ({par}).",
+    win_par_over: "O PAR do solucionador era {par}. Diferença: {diff}.",
     hint_to_foundation_flip: "Mova {card} para a fundação. Isso vira uma carta virada para baixo.",
     hint_move_stack_flip: "Mover a pilha de {card} vira uma carta virada para baixo.",
     hint_waste_to_foundation: "Você pode mover o {card} do descarte para a fundação.",
@@ -533,7 +559,7 @@ const I18N = {
     meta_desc: "ऐसा क्लोंडाइक सॉलिटेयर जिसमें कोई बँटवारा असंभव नहीं है। हर बँटवारे का हल मौजूद है (1 पत्ता खींचें)।",
     app_title: "हमेशा हल होने वाला सॉलिटेयर",
     app_sub: "कोई बँटवारा असंभव नहीं है। हर बँटवारे का हल है (क्लोंडाइक / 1 पत्ता)।",
-    stat_deal: "बँटवारा", stat_diff: "कठिनाई", stat_moves: "चालें", stat_time: "समय", stat_found: "फाउंडेशन",
+    stat_deal: "बँटवारा", stat_diff: "कठिनाई", stat_moves: "चालें", stat_time: "समय", stat_found: "फाउंडेशन", stat_nodes: "खोज नोड", stat_par: "PAR",
     diff_easy: "आसान", diff_easy_btn: "आसान (अभ्यास)", diff_normal: "सामान्य", diff_hard: "कठिन",
     btn_new: "नया बँटवारा", btn_restart: "फिर से शुरू", btn_undo: "एक चाल वापस", btn_hint: "संकेत", btn_auto: "ऑटो संग्रह",
     win_title: "जीत गए!", win_note: "इस बँटवारे का भी सचमुच हल था।", btn_win_new: "नया बँटवारा खेलें",
@@ -548,6 +574,9 @@ const I18N = {
     msg_deal_verified: "बँटवारा #{seed} — सत्यापित बँटवारा, हल की गारंटी के साथ ({diff})।",
     msg_stock_recycled: "रद्दी पत्तों को वापस गड्डी में पलट दिया गया है।",
     win_detail: "बँटवारा #{seed} · चालें {moves} · समय {time}",
+    win_par_beat: "🏆 आपने सॉल्वर का PAR ({par}) पछाड़ दिया! अंतर: {diff} चालें।",
+    win_par_tie: "आप सॉल्वर के PAR ({par}) के ठीक बराबर रहे।",
+    win_par_over: "सॉल्वर का PAR {par} था। अंतर: {diff} चालें।",
     hint_to_foundation_flip: "{card} को फाउंडेशन में रखें। इससे एक उल्टा पत्ता खुलेगा।",
     hint_move_stack_flip: "{card} की ढेरी हटाने से एक उल्टा पत्ता खुलेगा।",
     hint_waste_to_foundation: "रद्दी के {card} को फाउंडेशन में रख सकते हैं।",
@@ -604,7 +633,7 @@ function applyLang(lang) {
   if (S) {
     hintState = null;
     render();
-    if (S.won) $("win-detail").textContent = t("win_detail", { seed: S.seed, moves: S.moves, time: fmtTime(S.elapsed) });
+    if (S.won) { $("win-detail").textContent = t("win_detail", { seed: S.seed, moves: S.moves, time: fmtTime(S.elapsed) }); $("win-par").textContent = winParText(); }
     else setMsg(S.diff === "easy" ? t("msg_deal_easy", { seed: S.seed }) : t("msg_deal_verified", { seed: S.seed, diff: diffLabel(S.diff) }));
   }
 }
@@ -699,11 +728,20 @@ function tryMove(src, dest) {
   return true;
 }
 function afterAction() { checkWin(); render(); }
+function winParText() {
+  const meta = S.diff !== "easy" ? POOL_META[S.seed] : null;
+  if (!meta) return "";
+  const par = meta[1];
+  if (S.moves < par) return t("win_par_beat", { par, diff: par - S.moves });
+  if (S.moves === par) return t("win_par_tie", { par });
+  return t("win_par_over", { par, diff: S.moves - par });
+}
 function checkWin() {
   const total = S.foundations.reduce((a, p) => a + p.length, 0);
   if (total === 52 && !S.won) {
     S.won = true; S.elapsed = S.started ? Date.now() - S.startTime : 0; stopAuto();
     $("win-detail").textContent = t("win_detail", { seed: S.seed, moves: S.moves, time: fmtTime(S.elapsed) });
+    $("win-par").textContent = winParText();
     $("win").style.display = "flex";
     confetti();
   }
@@ -840,6 +878,10 @@ function render() {
   $("st-seed").textContent = "#" + S.seed;
   $("st-diff").textContent = diffLabel(S.diff);
   $("st-moves").textContent = S.moves;
+  const meta = S.diff !== "easy" ? POOL_META[S.seed] : null;
+  $("stat-nodes-wrap").style.display = meta ? "" : "none";
+  $("stat-par-wrap").style.display = meta ? "" : "none";
+  if (meta) { $("st-nodes").textContent = meta[0].toLocaleString(); $("st-par").textContent = meta[1]; }
   $("st-found").textContent = S.foundations.reduce((a, p) => a + p.length, 0);
   $("btn-undo").disabled = !S.history.length;
   $("btn-auto").disabled = S.won || !allFaceUp();
