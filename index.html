@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>必ず解けるソリティア | Guaranteed Solvable Solitaire</title>
+<meta name="description" content="詰む配布を排除したクロンダイク・ソリティア。すべての配布に解法が存在します（1枚引き）。">
+<style>
+  :root{
+    --cw: min(calc((100vw - 48px) / 7), 92px);
+    --ch: calc(var(--cw) * 1.42);
+    --gap: 6px;
+    --radius: calc(var(--cw) * 0.09);
+  }
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family: "Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
+    background: radial-gradient(ellipse at 50% 30%, #177245 0%, #0d5a33 55%, #083d23 100%);
+    color:#fff; min-height:100vh; user-select:none; -webkit-user-select:none;
+    touch-action: manipulation;
+  }
+  header{ padding:10px 12px 4px; text-align:center; }
+  header h1{ margin:0; font-size:clamp(18px,4.5vw,28px); letter-spacing:.04em; }
+  header .sub{ margin:2px 0 0; font-size:clamp(11px,2.8vw,13px); opacity:.85; }
+  .stats{
+    display:flex; justify-content:center; gap:14px; flex-wrap:wrap;
+    font-size:clamp(12px,3vw,14px); margin:8px 0 2px;
+  }
+  .stats b{ font-variant-numeric: tabular-nums; }
+  .controls{ display:flex; justify-content:center; gap:6px; flex-wrap:wrap; padding:6px 8px 10px; }
+  .controls button{
+    border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff;
+    border-radius:999px; padding:7px 13px; font-size:13px; cursor:pointer; font-family:inherit;
+  }
+  .controls button:hover{ background:rgba(255,255,255,.25); }
+  .controls button:disabled{ opacity:.4; cursor:default; }
+  .controls button.primary{ background:#f5c542; color:#3a2c00; border-color:#f5c542; font-weight:700; }
+  .langrow{ display:flex; justify-content:center; padding:2px 8px 0; }
+  .langrow select{
+    border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff;
+    border-radius:999px; padding:5px 10px; font-size:12px; cursor:pointer; font-family:inherit;
+  }
+  .langrow select option{ color:#111; }
+  #msg{ text-align:center; min-height:1.5em; font-size:13px; color:#ffe9a8; padding:0 10px 6px; }
+  #board{
+    width: calc(var(--cw) * 7 + var(--gap) * 6);
+    margin:0 auto; padding-bottom:30px; touch-action:none;
+  }
+  .toprow{ display:grid; grid-template-columns: repeat(7, var(--cw)); gap: var(--gap); margin-bottom:14px; }
+  .tableau{ display:grid; grid-template-columns: repeat(7, var(--cw)); gap: var(--gap); align-items:start; }
+  .slot{
+    width:var(--cw); height:var(--ch); border-radius:var(--radius);
+    border:2px dashed rgba(255,255,255,.28); position:relative; flex:none;
+  }
+  .slot.drop-ok{ border-color:#ffe9a8; background:rgba(255,233,168,.15); }
+  .pile{ position:relative; width:var(--cw); }
+  .card{
+    width:var(--cw); height:var(--ch); border-radius:var(--radius);
+    background:#fff; color:#111; position:absolute; left:0;
+    box-shadow:0 1px 3px rgba(0,0,0,.45);
+    font-weight:700; overflow:hidden; cursor:pointer;
+  }
+  .card.red{ color:#d21f3c; }
+  .card .tl{ position:absolute; top:3%; left:6%; font-size:calc(var(--cw)*0.24); line-height:1.05; text-align:center; }
+  .card .br{ position:absolute; bottom:3%; right:6%; font-size:calc(var(--cw)*0.24); line-height:1.05; text-align:center; transform:rotate(180deg); }
+  .card .pip{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:calc(var(--cw)*0.52); }
+  .card.down{
+    background: repeating-linear-gradient(45deg,#2255aa 0 6px,#1b4390 6px 12px);
+    border:2px solid #dfe8f5; cursor:default;
+  }
+  .card.selected{ outline:3px solid #f5c542; outline-offset:-1px; z-index:50 !important; }
+  .card.hintsrc{ outline:3px solid #37e0a0; outline-offset:-1px; }
+  .slot.hintdst, .card.hintdst{ outline:3px solid #37e0a0; outline-offset:2px; }
+  .toprow .card{ position:absolute; top:0; }
+  .stockwrap{ position:relative; width:var(--cw); height:var(--ch); }
+  .stockcount{
+    position:absolute; right:-4px; bottom:-8px; background:#083d23; border:1px solid rgba(255,255,255,.5);
+    color:#fff; font-size:11px; border-radius:999px; padding:1px 7px; z-index:60;
+  }
+  .foundation-label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:calc(var(--cw)*0.5); opacity:.35; pointer-events:none;
+  }
+  #draglayer{ position:fixed; inset:0; pointer-events:none; z-index:1000; }
+  #draglayer .card{ position:fixed; }
+  #win{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); display:none;
+    align-items:center; justify-content:center; z-index:2000; padding:16px;
+  }
+  #win .panel{
+    background:#fff; color:#123; border-radius:16px; padding:26px 30px; text-align:center;
+    max-width:420px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,.5);
+  }
+  #win h2{ margin:0 0 8px; font-size:26px; }
+  #win p{ margin:4px 0; }
+  #win button{
+    margin-top:14px; border:none; background:#177245; color:#fff; border-radius:999px;
+    padding:10px 22px; font-size:15px; cursor:pointer; font-family:inherit; font-weight:700;
+  }
+  .confetti{ position:fixed; top:-12px; width:10px; height:14px; z-index:1900; pointer-events:none; }
+  footer{
+    max-width:760px; margin:0 auto; padding:4px 16px 30px; font-size:12px; line-height:1.7; opacity:.9;
+  }
+  footer h3{ font-size:13px; margin:10px 0 2px; }
+  footer p{ margin:2px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="app-title">🃏 必ず解けるソリティア</h1>
+  <p class="sub" data-i18n="app_sub">詰む配布は出しません。すべての配布に解法があります（クロンダイク／1枚引き）</p>
+  <div class="langrow">
+    <label>🌐 <select id="lang-select" aria-label="言語">
+      <option value="ja">日本語</option>
+      <option value="en">English</option>
+      <option value="zh-CN">简体中文</option>
+      <option value="es">Español</option>
+      <option value="ru">Русский</option>
+      <option value="pt-BR">Português (Brasil)</option>
+      <option value="hi">हिन्दी</option>
+    </select></label>
+  </div>
+  <div class="stats">
+    <span><span data-i18n="stat_deal">配布番号</span> <b id="st-seed">-</b></span>
+    <span><span data-i18n="stat_diff">難易度</span> <b id="st-diff">ふつう</b></span>
+    <span><span data-i18n="stat_moves">手数</span> <b id="st-moves">0</b></span>
+    <span><span data-i18n="stat_time">時間</span> <b id="st-time">0:00</b></span>
+    <span><span data-i18n="stat_found">組札</span> <b id="st-found">0</b>/52</span>
+  </div>
+  <div class="controls diffs">
+    <button data-diff="easy">かんたん（練習）</button>
+    <button data-diff="normal" class="primary">ふつう</button>
+    <button data-diff="hard">むずかしい</button>
+  </div>
+  <div class="controls">
+    <button id="btn-new" class="primary" data-i18n="btn_new">新しい配布</button>
+    <button id="btn-restart" data-i18n="btn_restart">やり直し</button>
+    <button id="btn-undo" data-i18n="btn_undo">一手戻す</button>
+    <button id="btn-hint" data-i18n="btn_hint">ヒント</button>
+    <button id="btn-auto" data-i18n="btn_auto">自動回収</button>
+  </div>
+  <div id="msg"></div>
+</header>
+
+<main id="board">
+  <div class="toprow" id="toprow"></div>
+  <div class="tableau" id="tableau"></div>
+</main>
+
+<div id="draglayer"></div>
+
+<div id="win">
+  <div class="panel">
+    <h2 id="win-title">🎉 クリア！</h2>
+    <p id="win-detail"></p>
+    <p data-i18n="win_note">この配布にも、ちゃんと解法がありました。</p>
+    <button id="btn-win-new" data-i18n="btn_win_new">新しい配布で遊ぶ</button>
+  </div>
+</div>
+
+<footer>
+  <h3 data-i18n="footer_about_h">このゲームの保証と難易度について</h3>
+  <p data-i18n="footer_about_1">「ふつう」「むずかしい」は通常のランダム配布から、判定用ソルバーが実際に解法を見つけ、その解法を再生検証できたものだけを集めた検証済みプールを使っています。解けない配布は出ません。難易度の違いは、ソルバーが解法を見つけるのに要した探索量です。「むずかしい」は解法がなかなか見つからない配布で、遠回りの手や組札から戻す手が必要になることがあります。実測では、通常配布は「何も考えず組札へ送るだけの手」を繰り返しても 52 枚中 2〜15 枚で止まります。</p>
+  <p data-i18n="footer_about_2">「かんたん」は練習用で、逆生成（先に解き方を決めてから配置する）方式のため、考えずに進めても解けます。途中で別の手を打てば詰むことはありますが、その時は「一手戻す」で戻れます。</p>
+  <h3 data-i18n="footer_howto_h">遊び方</h3>
+  <p data-i18n="footer_howto_1">山札をクリック／タップすると1枚めくります。場札は「赤黒交互・数字が1つずつ小さく」なるよう重ね、空いた列には K が置けます。組札には同じマークを A から順に重ねます。カードはドラッグでも、クリックで選んで置き先をクリックしても動かせます。ダブルクリックで置ける場所へ自動で動きます。</p>
+  <p>© Tosh1</p>
+</footer>
+
+<script>
+"use strict";
+/* ==== CORE START ==== */
+const SUITS = ["♠", "♥", "♦", "♣"];
+const isRed = (suit) => suit === 1 || suit === 2;
+const rankLabel = (rank) => rank === 1 ? "A" : rank === 11 ? "J" : rank === 12 ? "Q" : rank === 13 ? "K" : String(rank);
+const cardName = (c) => SUITS[c.suit] + rankLabel(c.rank);
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* 逆生成: 先に「K→Aの順に組札から取り除く」配置順を作り、
+   その逆順（A→K）が解法になるよう場札・山札へ割り当てる。 */
+function generateDeal(seed) {
+  const rng = mulberry32(seed);
+  const nextDown = [13, 13, 13, 13];
+  const placement = []; // 配置順（この逆順が解法）
+  while (placement.length < 52) {
+    const avail = [0, 1, 2, 3].filter((s) => nextDown[s] > 0);
+    const suit = avail[Math.floor(rng() * avail.length)];
+    placement.push({ suit, rank: nextDown[suit] });
+    nextDown[suit]--;
+  }
+  const pileCap = [1, 2, 3, 4, 5, 6, 7];
+  let stockCap = 24;
+  const pileAssign = [[], [], [], [], [], [], []];
+  const stockAssign = [];
+  for (const card of placement) {
+    let total = stockCap;
+    for (const c of pileCap) total += c;
+    let r = Math.floor(rng() * total);
+    if (r < stockCap) { stockCap--; stockAssign.push(card); continue; }
+    r -= stockCap;
+    for (let p = 0; p < 7; p++) {
+      if (r < pileCap[p]) { pileCap[p]--; pileAssign[p].push(card); break; }
+      r -= pileCap[p];
+    }
+  }
+  const tableau = pileAssign.map((cards) =>
+    cards.map((c, i) => ({ suit: c.suit, rank: c.rank, faceUp: i === cards.length - 1 }))
+  );
+  // 山札: 解法順（配置順の逆）に引けるよう並べる。stock は末尾が上（popで引く）。
+  const drawOrder = stockAssign.slice().reverse();
+  const stock = drawOrder.slice().reverse().map((c) => ({ suit: c.suit, rank: c.rank, faceUp: false }));
+  const solution = placement.slice().reverse().map((c) => ({ suit: c.suit, rank: c.rank }));
+  return { tableau, stock, solution };
+}
+
+/* 解法シミュレーションで配布が本当に解けるか検証する（場札を上から剥がし、山札は順に引く解法）。 */
+function verifyDeal(deal) {
+  const tableau = deal.tableau.map((p) => p.map((c) => ({ ...c })));
+  const stockTmp = deal.stock.map((c) => ({ ...c }));
+  const drawOrder = [];
+  while (stockTmp.length) drawOrder.push(stockTmp.pop());
+  let drawIdx = 0;
+  const foundations = [0, 0, 0, 0];
+  for (const step of deal.solution) {
+    if (drawIdx < drawOrder.length && drawOrder[drawIdx].suit === step.suit && drawOrder[drawIdx].rank === step.rank) {
+      drawIdx++;
+    } else {
+      const p = tableau.findIndex((pile) => {
+        const top = pile[pile.length - 1];
+        return top && top.faceUp && top.suit === step.suit && top.rank === step.rank;
+      });
+      if (p < 0) return false;
+      tableau[p].pop();
+      const nt = tableau[p][tableau[p].length - 1];
+      if (nt) nt.faceUp = true;
+    }
+    if (foundations[step.suit] !== step.rank - 1) return false;
+    foundations[step.suit]++;
+  }
+  return foundations.every((v) => v === 13) && drawIdx === drawOrder.length && tableau.every((p) => p.length === 0);
+}
+
+/* 標準配布（ふつう／むずかしい用）: シャッフル→場札1..7枚（先頭だけ表）→残り24枚が山札 */
+function dealFromSeed(seed) {
+  const rng = mulberry32(seed);
+  const deck = Array.from({ length: 52 }, (_, i) => i);
+  for (let i = 51; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const t = deck[i]; deck[i] = deck[j]; deck[j] = t; }
+  const tableau = [];
+  let idx = 0;
+  for (let p = 0; p < 7; p++) {
+    const pile = [];
+    for (let k = 0; k <= p; k++) {
+      const id = deck[idx++];
+      pile.push({ suit: Math.floor(id / 13), rank: (id % 13) + 1, faceUp: k === p });
+    }
+    tableau.push(pile);
+  }
+  const stock = deck.slice(idx).map((id) => ({ suit: Math.floor(id / 13), rank: (id % 13) + 1, faceUp: false }));
+  return { tableau, stock };
+}
+/* 検証済みシードプール（ビルド時に差し込む） */
+const POOLS = {"normal":[200001,200002,200003,200004,200005,200006,200007,200010,200014,200016,200017,200021,200022,200025,200029,200031,200032,200033,200035,200037,200038,200040,200041,200042,200044,200045,200046,200047,200049,200050,200051,200057,200058,200059,200060,200063,200064,200065,200069,200070,200071,200073,200074,200076,200078,200080,200081,200085,200087,200088,200089,200090,200091,200092,200094,200095,200096,200101,200102,200110,200111,200112,200114,200116,200117,200118,200119,200124,200126,200129,200132,200133,200134,200136,200142,200150,200153,200154,200155,200157,200160,200161,200162,200164,200165,200166,200169,200170,200174,200179,200180,200181,200184,200185,200186,200187,200188,200190,200191,200194,200195,200196,200197,200198,200199,200200,200202,200204,200205,200209,200211,200215,200217,200218,200220,200221,200223,200225,200227,200228],"hard":[200052,200054,200068,200104,200120,200127,200147,200151,200168,200176,200222,200226,200232,200241,200246,200248,200255,200257,200263,200292,200303,200344,200345,200371,200387,200393,200398,200405,200407,200435,200448,200451,200457,200458,200471,200492,200516,200549,200561,200565,200598,200606,200612,200615,200616,200629,200635,200643,200666,200669]};
+
+function canPlaceOnTableau(card, destPile) {
+  if (!destPile.length) return card.rank === 13;
+  const top = destPile[destPile.length - 1];
+  return top.faceUp && isRed(top.suit) !== isRed(card.suit) && top.rank === card.rank + 1;
+}
+function canPlaceOnFoundation(card, foundationPile) {
+  return foundationPile.length === card.rank - 1;
+}
+function isValidRun(cards) {
+  for (let i = 0; i < cards.length; i++) {
+    if (!cards[i].faceUp) return false;
+    if (i > 0) {
+      const prev = cards[i - 1], cur = cards[i];
+      if (!(prev.rank === cur.rank + 1 && isRed(prev.suit) !== isRed(cur.suit))) return false;
+    }
+  }
+  return cards.length > 0;
+}
+/* ==== CORE END ==== */
+</script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const boardEl = $("board"), topRowEl = $("toprow"), tableauEl = $("tableau"), dragLayer = $("draglayer");
+let S = null, sel = null, hintState = null, initialSnap = null;
+
+/* ==== i18n ==== */
+const LANGS = ["ja", "en", "zh-CN", "es", "ru", "pt-BR", "hi"];
+const I18N = {
+  ja: {
+    doc_title: "必ず解けるソリティア",
+    meta_desc: "詰む配布を排除したクロンダイク・ソリティア。すべての配布に解法が存在します（1枚引き）。",
+    app_title: "必ず解けるソリティア",
+    app_sub: "詰む配布は出しません。すべての配布に解法があります（クロンダイク／1枚引き）",
+    stat_deal: "配布番号", stat_diff: "難易度", stat_moves: "手数", stat_time: "時間", stat_found: "組札",
+    diff_easy: "かんたん", diff_easy_btn: "かんたん（練習）", diff_normal: "ふつう", diff_hard: "むずかしい",
+    btn_new: "新しい配布", btn_restart: "やり直し", btn_undo: "一手戻す", btn_hint: "ヒント", btn_auto: "自動回収",
+    win_title: "クリア！", win_note: "この配布にも、ちゃんと解法がありました。", btn_win_new: "新しい配布で遊ぶ",
+    footer_about_h: "このゲームの保証と難易度について",
+    footer_about_1: "「ふつう」「むずかしい」は通常のランダム配布から、判定用ソルバーが実際に解法を見つけ、その解法を再生検証できたものだけを集めた検証済みプールを使っています。解けない配布は出ません。難易度の違いは、ソルバーが解法を見つけるのに要した探索量です。「むずかしい」は解法がなかなか見つからない配布で、遠回りの手や組札から戻す手が必要になることがあります。実測では、通常配布は「何も考えず組札へ送るだけの手」を繰り返しても 52 枚中 2〜15 枚で止まります。",
+    footer_about_2: "「かんたん」は練習用で、逆生成（先に解き方を決めてから配置する）方式のため、考えずに進めても解けます。途中で別の手を打てば詰むことはありますが、その時は「一手戻す」で戻れます。",
+    footer_howto_h: "遊び方",
+    footer_howto_1: "山札をクリック／タップすると1枚めくります。場札は「赤黒交互・数字が1つずつ小さく」なるよう重ね、空いた列には K が置けます。組札には同じマークを A から順に重ねます。カードはドラッグでも、クリックで選んで置き先をクリックしても動かせます。ダブルクリックで置ける場所へ自動で動きます。",
+    lang_label: "言語",
+    msg_pool_empty: "プールが空です。",
+    msg_deal_easy: "配布番号 #{seed} ― かんたん：考えずに進めても解ける練習用です。",
+    msg_deal_verified: "配布番号 #{seed} ― 解法の存在を検証済みの配布です（{diff}）。",
+    msg_stock_recycled: "山札を裏返しました。",
+    win_detail: "配布番号 #{seed} ・ 手数 {moves} ・ 時間 {time}",
+    hint_to_foundation_flip: "{card} を組札へ。裏向きのカードがめくれます。",
+    hint_move_stack_flip: "{card} の列を動かすと裏向きのカードがめくれます。",
+    hint_waste_to_foundation: "捨て札の {card} を組札へ置けます。",
+    hint_to_foundation: "{card} を組札へ置けます。",
+    hint_waste_to_tableau: "捨て札の {card} を場札へ置けます。",
+    hint_move_stack: "{card} の列を動かせます。",
+    hint_draw_stock: "山札をめくりましょう。",
+    hint_stock_empty: "山札は尽きました。クリックで裏返して再利用できます。",
+    hint_none: "見つかりませんでした。「{undo}」で戻るか、別の手を探してみてください。",
+    msg_auto_stopped: "自動回収が止まりました。残りは手動で進めてください。",
+    msg_no_destination: "置ける場所がありません。",
+    msg_selected_card: "{card} を選択中。置き先をタップしてください。",
+    msg_selected_stack: "{card} の列を選択中。置き先をタップしてください。",
+    msg_restarted: "配布番号 #{seed} を最初からやり直します。",
+    msg_undone: "一手戻しました。",
+    confirm_discard_new: "今のゲームを破棄して、新しい配布にしますか？",
+    confirm_discard_diff: "今のゲームを破棄して、難易度「{diff}」で新しい配布にしますか？",
+  },
+  en: {
+    doc_title: "Guaranteed Solvable Solitaire",
+    meta_desc: "Klondike solitaire with no dead deals. Every deal has a solution (draw 1).",
+    app_title: "Guaranteed Solvable Solitaire",
+    app_sub: "No dead deals. Every deal has a solution (Klondike / Draw 1).",
+    stat_deal: "Deal", stat_diff: "Difficulty", stat_moves: "Moves", stat_time: "Time", stat_found: "Foundation",
+    diff_easy: "Easy", diff_easy_btn: "Easy (Practice)", diff_normal: "Normal", diff_hard: "Hard",
+    btn_new: "New Deal", btn_restart: "Restart", btn_undo: "Undo", btn_hint: "Hint", btn_auto: "Auto-Collect",
+    win_title: "You Win!", win_note: "As promised, this deal had a solution too.", btn_win_new: "Play a New Deal",
+    footer_about_h: "About the guarantee and difficulty levels",
+    footer_about_1: "“Normal” and “Hard” use a verified pool: deals collected from ordinary random deals for which the checking solver actually found a solution and replay-verified it move by move. No unsolvable deal is ever dealt. The difficulty difference is how much search the solver needed to find the solution. “Hard” deals hide their solutions well and may require detours or moving cards back down from the foundation. In testing, on ordinary deals a mindless strategy of only sending cards to the foundation stalls after just 2–15 of the 52 cards.",
+    footer_about_2: "“Easy” is for practice and uses reverse generation (the solution is decided first, then the cards are placed), so you can solve it without thinking. You can still get stuck by playing different moves, but “Undo” will take you back.",
+    footer_howto_h: "How to Play",
+    footer_howto_1: "Click or tap the stock to turn over one card. Build tableau piles in alternating colors, descending by one rank; only a King can go in an empty column. Build each foundation up in the same suit from Ace. Drag cards, or click to select and then click the destination. Double-click a card to move it automatically to wherever it fits.",
+    lang_label: "Language",
+    msg_pool_empty: "The pool is empty.",
+    msg_deal_easy: "Deal #{seed} — Easy: a practice deal you can solve without thinking.",
+    msg_deal_verified: "Deal #{seed} — a verified deal with a guaranteed solution ({diff}).",
+    msg_stock_recycled: "Turned the waste pile back into the stock.",
+    win_detail: "Deal #{seed} · Moves {moves} · Time {time}",
+    hint_to_foundation_flip: "Move {card} to the foundation. It flips a face-down card.",
+    hint_move_stack_flip: "Moving the {card} stack flips a face-down card.",
+    hint_waste_to_foundation: "You can move the waste {card} to the foundation.",
+    hint_to_foundation: "You can move {card} to the foundation.",
+    hint_waste_to_tableau: "You can move the waste {card} to the tableau.",
+    hint_move_stack: "You can move the {card} stack.",
+    hint_draw_stock: "Turn over a card from the stock.",
+    hint_stock_empty: "The stock is empty. Click it to flip it over and reuse it.",
+    hint_none: "No move found. Try “{undo}” or look for another move.",
+    msg_auto_stopped: "Auto-collect stopped. Please continue by hand.",
+    msg_no_destination: "There's nowhere to put it.",
+    msg_selected_card: "{card} selected. Tap a destination.",
+    msg_selected_stack: "{card} stack selected. Tap a destination.",
+    msg_restarted: "Restarting deal #{seed} from the beginning.",
+    msg_undone: "Undid one move.",
+    confirm_discard_new: "Discard the current game and start a new deal?",
+    confirm_discard_diff: "Discard the current game and start a new deal on “{diff}”?",
+  },
+  "zh-CN": {
+    doc_title: "保证有解的接龙纸牌",
+    meta_desc: "不会发死局的克朗代克接龙。每一局都有解法（抽1张）。",
+    app_title: "保证有解的接龙纸牌",
+    app_sub: "不会发死局。每一局都有解法（克朗代克／抽1张）。",
+    stat_deal: "局号", stat_diff: "难度", stat_moves: "步数", stat_time: "时间", stat_found: "基础牌",
+    diff_easy: "简单", diff_easy_btn: "简单（练习）", diff_normal: "普通", diff_hard: "困难",
+    btn_new: "新局", btn_restart: "重新开始", btn_undo: "撤销一步", btn_hint: "提示", btn_auto: "自动收牌",
+    win_title: "过关！", win_note: "这一局也确实有解法。", btn_win_new: "再来一局",
+    footer_about_h: "关于保证与难度",
+    footer_about_1: "“普通”和“困难”使用经过验证的牌局池：从普通随机发牌中，只收集判定求解器实际找到解法、并逐步重放验证过的牌局。不会发出无解的局。难度的区别在于求解器找到解法所需的搜索量。“困难”的解法很难找，可能需要绕路或把牌从基础牌叠移回。在实测中，对普通牌局只用“把能放的牌都送到基础牌叠”的无脑策略，只能推进52张中的2～15张就会停住。",
+    footer_about_2: "“简单”是练习模式，采用逆向生成（先决定解法再放置牌），不假思索也能解开。途中打了别的牌也可能卡住，但可以用“撤销一步”返回。",
+    footer_howto_h: "玩法",
+    footer_howto_1: "点击牌堆可翻开1张。桌面牌列要按红黑交替、点数逐一递减来叠放，空列只能放 K。基础牌叠按同一花色从 A 开始依次叠放。可以拖动牌，也可以先点选再点目标位置。双击可自动把牌移到可放的位置。",
+    lang_label: "语言",
+    msg_pool_empty: "牌局池为空。",
+    msg_deal_easy: "第 #{seed} 局 — 简单：不用动脑也能解开的练习局。",
+    msg_deal_verified: "第 #{seed} 局 — 已验证有解法的牌局（{diff}）。",
+    msg_stock_recycled: "已把废牌堆翻回牌堆。",
+    win_detail: "局号 #{seed} · 步数 {moves} · 时间 {time}",
+    hint_to_foundation_flip: "把 {card} 移到基础牌叠，可以翻开一张暗牌。",
+    hint_move_stack_flip: "移动 {card} 这一列，可以翻开一张暗牌。",
+    hint_waste_to_foundation: "可以把废牌堆的 {card} 移到基础牌叠。",
+    hint_to_foundation: "可以把 {card} 移到基础牌叠。",
+    hint_waste_to_tableau: "可以把废牌堆的 {card} 移到桌面牌列。",
+    hint_move_stack: "可以移动 {card} 这一列。",
+    hint_draw_stock: "从牌堆翻一张牌吧。",
+    hint_stock_empty: "牌堆已用完。点击可翻回再利用。",
+    hint_none: "没有找到可行的着法。试试“{undo}”返回，或找找其他着法。",
+    msg_auto_stopped: "自动收牌已停止。剩下的请手动进行。",
+    msg_no_destination: "没有可以放的位置。",
+    msg_selected_card: "已选中 {card}。请点选放置位置。",
+    msg_selected_stack: "已选中 {card} 这一列。请点选放置位置。",
+    msg_restarted: "重新开始第 #{seed} 局。",
+    msg_undone: "已撤销一步。",
+    confirm_discard_new: "放弃当前游戏，开始新的一局吗？",
+    confirm_discard_diff: "放弃当前游戏，以难度“{diff}”开始新的一局吗？",
+  },
+  es: {
+    doc_title: "Solitario siempre resoluble",
+    meta_desc: "Solitario Klondike sin repartos imposibles. Todos los repartos tienen solución (robo de 1 carta).",
+    app_title: "Solitario siempre resoluble",
+    app_sub: "Sin repartos imposibles. Todos tienen solución (Klondike / robo de 1).",
+    stat_deal: "Reparto", stat_diff: "Dificultad", stat_moves: "Movimientos", stat_time: "Tiempo", stat_found: "Fundación",
+    diff_easy: "Fácil", diff_easy_btn: "Fácil (práctica)", diff_normal: "Normal", diff_hard: "Difícil",
+    btn_new: "Nuevo reparto", btn_restart: "Reiniciar", btn_undo: "Deshacer", btn_hint: "Pista", btn_auto: "Recogida auto",
+    win_title: "¡Ganaste!", win_note: "Este reparto también tenía solución, como debe ser.", btn_win_new: "Jugar otro reparto",
+    footer_about_h: "Sobre la garantía y la dificultad",
+    footer_about_1: "«Normal» y «Difícil» usan un conjunto verificado: repartos tomados de repartos aleatorios normales en los que el solucionador de comprobación encontró realmente una solución y la verificó reproduciéndola jugada a jugada. Nunca se reparte un juego sin solución. La diferencia de dificultad es cuánto tuvo que buscar el solucionador para encontrar la solución. En «Difícil» la solución está bien escondida y puede exigir rodeos o bajar cartas de la fundación. En las pruebas, con repartos normales, la estrategia de enviar a la fundación todo lo que se puede, sin pensar, se atasca tras solo 2–15 de las 52 cartas.",
+    footer_about_2: "«Fácil» es para practicar y usa generación inversa (primero se decide la solución y luego se colocan las cartas), así que se puede resolver sin pensar. Aun así puedes atascarte si juegas otros movimientos, pero con «Deshacer» puedes volver atrás.",
+    footer_howto_h: "Cómo jugar",
+    footer_howto_1: "Haz clic o toca el mazo para voltear una carta. En el tablero se apila alternando colores y bajando de rango en uno; en una columna vacía solo cabe un Rey (K). En cada fundación se apila el mismo palo en orden desde el As. Puedes arrastrar las cartas, o hacer clic para seleccionar y clic en el destino. Con doble clic, la carta se mueve sola a donde quepa.",
+    lang_label: "Idioma",
+    msg_pool_empty: "El conjunto está vacío.",
+    msg_deal_easy: "Reparto #{seed} — Fácil: un reparto de práctica que se resuelve sin pensar.",
+    msg_deal_verified: "Reparto #{seed} — reparto verificado con solución garantizada ({diff}).",
+    msg_stock_recycled: "Se ha dado la vuelta al descarte para reutilizarlo como mazo.",
+    win_detail: "Reparto #{seed} · Movimientos {moves} · Tiempo {time}",
+    hint_to_foundation_flip: "Mueve {card} a la fundación. Se volteará una carta boca abajo.",
+    hint_move_stack_flip: "Mover la columna de {card} voltea una carta boca abajo.",
+    hint_waste_to_foundation: "Puedes mover el {card} del descarte a la fundación.",
+    hint_to_foundation: "Puedes mover {card} a la fundación.",
+    hint_waste_to_tableau: "Puedes mover el {card} del descarte al tablero.",
+    hint_move_stack: "Puedes mover la columna de {card}.",
+    hint_draw_stock: "Voltea una carta del mazo.",
+    hint_stock_empty: "El mazo se ha acabado. Haz clic para darle la vuelta y reutilizarlo.",
+    hint_none: "No se ha encontrado ningún movimiento. Prueba con «{undo}» o busca otro movimiento.",
+    msg_auto_stopped: "La recogida automática se ha detenido. Continúa a mano.",
+    msg_no_destination: "No hay ningún sitio donde ponerla.",
+    msg_selected_card: "{card} seleccionada. Toca el destino.",
+    msg_selected_stack: "Columna de {card} seleccionada. Toca el destino.",
+    msg_restarted: "Reiniciando el reparto #{seed} desde el principio.",
+    msg_undone: "Se ha deshecho un movimiento.",
+    confirm_discard_new: "¿Descartar la partida actual y empezar un nuevo reparto?",
+    confirm_discard_diff: "¿Descartar la partida actual y empezar un nuevo reparto en «{diff}»?",
+  },
+  ru: {
+    doc_title: "Пасьянс с гарантированным решением",
+    meta_desc: "Пасьянс «Косынка» без тупиковых раздач. У каждой раздачи есть решение (тянуть по 1 карте).",
+    app_title: "Всегда решаемый пасьянс",
+    app_sub: "Тупиковых раздач не бывает. У каждой раздачи есть решение (Косынка / по 1 карте).",
+    stat_deal: "Раздача", stat_diff: "Сложность", stat_moves: "Ходы", stat_time: "Время", stat_found: "Дом",
+    diff_easy: "Лёгкий", diff_easy_btn: "Лёгкий (тренировка)", diff_normal: "Обычный", diff_hard: "Сложный",
+    btn_new: "Новая раздача", btn_restart: "Заново", btn_undo: "Ход назад", btn_hint: "Подсказка", btn_auto: "Автосбор",
+    win_title: "Победа!", win_note: "И у этой раздачи, как и обещано, было решение.", btn_win_new: "Играть новую раздачу",
+    footer_about_h: "О гарантии и уровнях сложности",
+    footer_about_1: "«Обычный» и «Сложный» используют проверенный набор: раздачи из обычных случайных раздач, для которых проверяющий решатель действительно нашёл решение и подтвердил его, повторив ход за ходом. Нерешаемых раздач не бывает. Разница в сложности — сколько поиска понадобилось решателю, чтобы найти решение. В «Сложном» решение спрятано глубоко: могут понадобиться обходные ходы или возврат карт из дома. По измерениям, на обычных раздачах бездумная стратегия «просто отправлять всё в дом» застревает, продвинув лишь 2–15 карт из 52.",
+    footer_about_2: "«Лёгкий» — тренировочный уровень с обратной генерацией (сначала задаётся решение, затем раскладываются карты), поэтому его можно пройти, не задумываясь. Другими ходами всё же можно зайти в тупик, но кнопка «Ход назад» вернёт вас обратно.",
+    footer_howto_h: "Как играть",
+    footer_howto_1: "Щёлкайте или касайтесь колоды, чтобы открыть одну карту. На игровом поле карты кладут, чередуя цвета и уменьшая достоинство на единицу; в пустой столбец можно положить только короля (K). В дом карты складывают по одной масти в порядке от туза. Карты можно перетаскивать или щёлкать для выбора, а затем щёлкать по месту назначения. Двойной щелчок сам переносит карту туда, где она помещается.",
+    lang_label: "Язык",
+    msg_pool_empty: "Набор пуст.",
+    msg_deal_easy: "Раздача #{seed} — Лёгкий: тренировочная раздача, решается без раздумий.",
+    msg_deal_verified: "Раздача #{seed} — проверенная раздача с гарантированным решением ({diff}).",
+    msg_stock_recycled: "Отбой перевёрнут обратно в колоду.",
+    win_detail: "Раздача #{seed} · Ходов: {moves} · Время: {time}",
+    hint_to_foundation_flip: "Отправьте {card} в дом. Откроется карта, лежащая рубашкой вверх.",
+    hint_move_stack_flip: "Если переместить стопку {card}, откроется карта рубашкой вверх.",
+    hint_waste_to_foundation: "Карту {card} из отбоя можно отправить в дом.",
+    hint_to_foundation: "Карту {card} можно отправить в дом.",
+    hint_waste_to_tableau: "Карту {card} из отбоя можно положить на игровое поле.",
+    hint_move_stack: "Можно переместить стопку {card}.",
+    hint_draw_stock: "Откройте карту из колоды.",
+    hint_stock_empty: "Колода закончилась. Щёлкните, чтобы перевернуть её и использовать снова.",
+    hint_none: "Ходов не нашлось. Попробуйте «{undo}» или поищите другой ход.",
+    msg_auto_stopped: "Автосбор остановился. Продолжайте вручную.",
+    msg_no_destination: "Положить некуда.",
+    msg_selected_card: "Выбрана карта {card}. Коснитесь места назначения.",
+    msg_selected_stack: "Выбрана стопка {card}. Коснитесь места назначения.",
+    msg_restarted: "Раздача #{seed} начинается сначала.",
+    msg_undone: "Один ход отменён.",
+    confirm_discard_new: "Сбросить текущую игру и начать новую раздачу?",
+    confirm_discard_diff: "Сбросить текущую игру и начать новую раздачу на уровне «{diff}»?",
+  },
+  "pt-BR": {
+    doc_title: "Paciência sempre solucionável",
+    meta_desc: "Paciência Klondike sem distribuições impossíveis. Toda distribuição tem solução (comprar 1 carta).",
+    app_title: "Paciência sempre solucionável",
+    app_sub: "Sem distribuições impossíveis. Todas têm solução (Klondike / comprar 1).",
+    stat_deal: "Distribuição", stat_diff: "Dificuldade", stat_moves: "Jogadas", stat_time: "Tempo", stat_found: "Fundação",
+    diff_easy: "Fácil", diff_easy_btn: "Fácil (treino)", diff_normal: "Normal", diff_hard: "Difícil",
+    btn_new: "Nova distribuição", btn_restart: "Recomeçar", btn_undo: "Desfazer", btn_hint: "Dica", btn_auto: "Recolher auto",
+    win_title: "Você venceu!", win_note: "Esta distribuição também tinha solução, como prometido.", btn_win_new: "Jogar nova distribuição",
+    footer_about_h: "Sobre a garantia e a dificuldade",
+    footer_about_1: "“Normal” e “Difícil” usam um conjunto verificado: distribuições comuns e aleatórias das quais o solucionador de verificação realmente encontrou uma solução e a confirmou repetindo-a jogada a jogada. Nenhuma distribuição impossível é entregue. A diferença de dificuldade é quanta busca o solucionador precisou para achar a solução. No “Difícil”, a solução é bem escondida e pode exigir desvios ou trazer cartas de volta da fundação. Nos testes, em distribuições comuns, a estratégia sem pensar de só mandar cartas para a fundação trava após apenas 2–15 das 52 cartas.",
+    footer_about_2: "“Fácil” é para treinar e usa geração reversa (a solução é decidida primeiro e as cartas são posicionadas depois), então dá para resolver sem pensar. Você ainda pode travar jogando outros movimentos, mas “Desfazer” leva você de volta.",
+    footer_howto_h: "Como jogar",
+    footer_howto_1: "Clique ou toque no monte para virar uma carta. No tabuleiro, empilhe alternando as cores e diminuindo o valor em um; numa coluna vazia só cabe um Rei (K). Em cada fundação, empilhe o mesmo naipe em ordem a partir do Ás. Arraste as cartas ou clique para selecionar e clique no destino. Com um clique duplo, a carta se move sozinha para onde couber.",
+    lang_label: "Idioma",
+    msg_pool_empty: "O conjunto está vazio.",
+    msg_deal_easy: "Distribuição #{seed} — Fácil: uma distribuição de treino que se resolve sem pensar.",
+    msg_deal_verified: "Distribuição #{seed} — distribuição verificada com solução garantida ({diff}).",
+    msg_stock_recycled: "O descarte foi virado de volta para o monte.",
+    win_detail: "Distribuição #{seed} · Jogadas {moves} · Tempo {time}",
+    hint_to_foundation_flip: "Mova {card} para a fundação. Isso vira uma carta virada para baixo.",
+    hint_move_stack_flip: "Mover a pilha de {card} vira uma carta virada para baixo.",
+    hint_waste_to_foundation: "Você pode mover o {card} do descarte para a fundação.",
+    hint_to_foundation: "Você pode mover {card} para a fundação.",
+    hint_waste_to_tableau: "Você pode mover o {card} do descarte para o tabuleiro.",
+    hint_move_stack: "Você pode mover a pilha de {card}.",
+    hint_draw_stock: "Vire uma carta do monte.",
+    hint_stock_empty: "O monte acabou. Clique para virá-lo e reutilizá-lo.",
+    hint_none: "Nenhuma jogada encontrada. Tente “{undo}” ou procure outra jogada.",
+    msg_auto_stopped: "A coleta automática parou. Continue manualmente.",
+    msg_no_destination: "Não há onde colocar.",
+    msg_selected_card: "{card} selecionada. Toque no destino.",
+    msg_selected_stack: "Pilha de {card} selecionada. Toque no destino.",
+    msg_restarted: "Recomeçando a distribuição #{seed} do início.",
+    msg_undone: "Uma jogada foi desfeita.",
+    confirm_discard_new: "Descartar o jogo atual e começar uma nova distribuição?",
+    confirm_discard_diff: "Descartar o jogo atual e começar uma nova distribuição em “{diff}”?",
+  },
+  hi: {
+    doc_title: "हमेशा हल होने वाला सॉलिटेयर",
+    meta_desc: "ऐसा क्लोंडाइक सॉलिटेयर जिसमें कोई बँटवारा असंभव नहीं है। हर बँटवारे का हल मौजूद है (1 पत्ता खींचें)।",
+    app_title: "हमेशा हल होने वाला सॉलिटेयर",
+    app_sub: "कोई बँटवारा असंभव नहीं है। हर बँटवारे का हल है (क्लोंडाइक / 1 पत्ता)।",
+    stat_deal: "बँटवारा", stat_diff: "कठिनाई", stat_moves: "चालें", stat_time: "समय", stat_found: "फाउंडेशन",
+    diff_easy: "आसान", diff_easy_btn: "आसान (अभ्यास)", diff_normal: "सामान्य", diff_hard: "कठिन",
+    btn_new: "नया बँटवारा", btn_restart: "फिर से शुरू", btn_undo: "एक चाल वापस", btn_hint: "संकेत", btn_auto: "ऑटो संग्रह",
+    win_title: "जीत गए!", win_note: "इस बँटवारे का भी सचमुच हल था।", btn_win_new: "नया बँटवारा खेलें",
+    footer_about_h: "गारंटी और कठिनाई के बारे में",
+    footer_about_1: "“सामान्य” और “कठिन” एक सत्यापित संग्रह का उपयोग करते हैं: सामान्य यादृच्छिक बँटवारों में से केवल वे बँटवारे लिए गए हैं जिनका हल जाँच करने वाले सॉल्वर ने वास्तव में खोजा और चाल-दर-चाल दोहराकर सत्यापित किया। कोई असंभव बँटवारा नहीं दिया जाता। कठिनाई का अंतर यह है कि सॉल्वर को हल खोजने में कितनी खोज करनी पड़ी। “कठिन” में हल अच्छी तरह छिपा होता है और घुमावदार चालें या फाउंडेशन से पत्ते वापस लाने की ज़रूरत पड़ सकती है। परीक्षणों में, सामान्य बँटवारों पर बिना सोचे सिर्फ़ फाउंडेशन में पत्ते भेजने की रणनीति 52 में से केवल 2–15 पत्तों के बाद अटक जाती है।",
+    footer_about_2: "“आसान” अभ्यास के लिए है और उल्टी उत्पत्ति (पहले हल तय किया जाता है, फिर पत्ते रखे जाते हैं) का उपयोग करता है, इसलिए बिना सोचे भी हल हो जाता है। बीच में अलग चालें चलने पर आप अटक सकते हैं, लेकिन “एक चाल वापस” से लौट सकते हैं।",
+    footer_howto_h: "कैसे खेलें",
+    footer_howto_1: "गड्डी पर क्लिक या टैप करने से एक पत्ता खुलता है। मैदान में रंग बारी-बारी से (लाल-काला) और संख्या एक-एक घटते क्रम में रखें; खाली खाने में केवल बादशाह (K) रखा जा सकता है। फाउंडेशन में एक ही सूट के पत्ते इक्के (A) से क्रम में रखें। पत्तों को खींचकर भी ले जा सकते हैं, या क्लिक करके चुनकर गंतव्य पर क्लिक करें। डबल-क्लिक करने पर पत्ता अपने आप उपयुक्त जगह चला जाता है।",
+    lang_label: "भाषा",
+    msg_pool_empty: "संग्रह खाली है।",
+    msg_deal_easy: "बँटवारा #{seed} — आसान: अभ्यास का बँटवारा, बिना सोचे हल हो जाता है।",
+    msg_deal_verified: "बँटवारा #{seed} — सत्यापित बँटवारा, हल की गारंटी के साथ ({diff})।",
+    msg_stock_recycled: "रद्दी पत्तों को वापस गड्डी में पलट दिया गया है।",
+    win_detail: "बँटवारा #{seed} · चालें {moves} · समय {time}",
+    hint_to_foundation_flip: "{card} को फाउंडेशन में रखें। इससे एक उल्टा पत्ता खुलेगा।",
+    hint_move_stack_flip: "{card} की ढेरी हटाने से एक उल्टा पत्ता खुलेगा।",
+    hint_waste_to_foundation: "रद्दी के {card} को फाउंडेशन में रख सकते हैं।",
+    hint_to_foundation: "{card} को फाउंडेशन में रख सकते हैं।",
+    hint_waste_to_tableau: "रद्दी के {card} को मैदान में रख सकते हैं।",
+    hint_move_stack: "{card} की ढेरी हटा सकते हैं।",
+    hint_draw_stock: "गड्डी से एक पत्ता खोलें।",
+    hint_stock_empty: "गड्डी खत्म हो गई है। क्लिक करके उसे पलटकर फिर उपयोग करें।",
+    hint_none: "कोई चाल नहीं मिली। “{undo}” से वापस जाएँ या कोई और चाल खोजें।",
+    msg_auto_stopped: "ऑटो-संग्रह रुक गया है। बाकी हाथ से आगे बढ़ाएँ।",
+    msg_no_destination: "रखने की कोई जगह नहीं है।",
+    msg_selected_card: "{card} चुना गया। गंतव्य पर टैप करें।",
+    msg_selected_stack: "{card} की ढेरी चुनी गई। गंतव्य पर टैप करें।",
+    msg_restarted: "बँटवारा #{seed} शुरू से फिर खेला जा रहा है।",
+    msg_undone: "एक चाल वापस ली गई।",
+    confirm_discard_new: "मौजूदा खेल छोड़कर नया बँटवारा शुरू करें?",
+    confirm_discard_diff: "मौजूदा खेल छोड़कर “{diff}” कठिनाई पर नया बँटवारा शुरू करें?",
+  },
+};
+function detectLang() {
+  try {
+    const saved = localStorage.getItem("gss-lang");
+    if (saved && LANGS.includes(saved)) return saved;
+  } catch (e) {}
+  const nav = (navigator.language || "en").toLowerCase();
+  if (nav.startsWith("zh")) return "zh-CN";
+  if (nav.startsWith("pt")) return "pt-BR";
+  const head = nav.split("-")[0];
+  return LANGS.includes(head) ? head : "en";
+}
+let LANG = detectLang();
+function t(key, params) {
+  let s = (I18N[LANG] && I18N[LANG][key]) || I18N.ja[key] || key;
+  if (params) for (const k in params) s = s.split("{" + k + "}").join(String(params[k]));
+  return s;
+}
+function diffLabel(d) { return t("diff_" + d); }
+function applyLang(lang) {
+  LANG = LANGS.includes(lang) ? lang : "en";
+  try { localStorage.setItem("gss-lang", LANG); } catch (e) {}
+  document.documentElement.lang = LANG;
+  document.title = t("doc_title");
+  const md = document.querySelector('meta[name="description"]');
+  if (md) md.setAttribute("content", t("meta_desc"));
+  document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  $("app-title").textContent = "🃏 " + t("app_title");
+  $("win-title").textContent = "🎉 " + t("win_title");
+  document.querySelectorAll(".diffs button").forEach((b) => {
+    b.textContent = b.dataset.diff === "easy" ? t("diff_easy_btn") : diffLabel(b.dataset.diff);
+  });
+  const selEl = $("lang-select");
+  selEl.value = LANG;
+  selEl.setAttribute("aria-label", t("lang_label"));
+  if (S) {
+    hintState = null;
+    render();
+    if (S.won) $("win-detail").textContent = t("win_detail", { seed: S.seed, moves: S.moves, time: fmtTime(S.elapsed) });
+    else setMsg(S.diff === "easy" ? t("msg_deal_easy", { seed: S.seed }) : t("msg_deal_verified", { seed: S.seed, diff: diffLabel(S.diff) }));
+  }
+}
+
+const snapshot = () => JSON.stringify({ t: S.tableau, s: S.stock, w: S.waste, f: S.foundations, m: S.moves });
+function restore(snap) {
+  const d = JSON.parse(snap);
+  S.tableau = d.t; S.stock = d.s; S.waste = d.w; S.foundations = d.f; S.moves = d.m;
+  sel = null; hintState = null;
+}
+function pushHistory() { S.history.push(snapshot()); if (S.history.length > 400) S.history.shift(); }
+function markStarted() { if (!S.started) { S.started = true; S.startTime = Date.now(); } }
+const fmtTime = (ms) => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+
+let currentDiff = "normal";
+const usedSeeds = { normal: new Set(), hard: new Set() };
+function pickPoolSeed(diff) {
+  const pool = POOLS[diff];
+  if (!pool || !pool.length) return null;
+  let rest = pool.filter((s) => !usedSeeds[diff].has(s));
+  if (!rest.length) { usedSeeds[diff].clear(); rest = pool; }
+  const seed = rest[Math.floor(Math.random() * rest.length)];
+  usedSeeds[diff].add(seed);
+  return seed;
+}
+function newGame(seedOpt, diffOpt) {
+  stopAuto();
+  const diff = diffOpt || currentDiff;
+  currentDiff = diff;
+  let seed, deal;
+  if (diff === "easy") {
+    seed = seedOpt || (1 + Math.floor(Math.random() * 999999));
+    deal = generateDeal(seed);
+    while (!verifyDeal(deal)) { seed++; deal = generateDeal(seed); }
+  } else {
+    seed = seedOpt || pickPoolSeed(diff);
+    if (seed == null) { setMsg(t("msg_pool_empty")); return; }
+    deal = dealFromSeed(seed);
+  }
+  S = {
+    seed, diff, tableau: deal.tableau, stock: deal.stock, waste: [], foundations: [[], [], [], []],
+    moves: 0, history: [], started: false, startTime: 0, elapsed: 0, won: false, autoTimer: null,
+  };
+  sel = null; hintState = null;
+  initialSnap = snapshot();
+  $("win").style.display = "none";
+  document.querySelectorAll(".diffs button").forEach((b) => b.classList.toggle("primary", b.dataset.diff === diff));
+  setMsg(diff === "easy"
+    ? t("msg_deal_easy", { seed })
+    : t("msg_deal_verified", { seed, diff: diffLabel(diff) }));
+  render();
+}
+function setMsg(t) { $("msg").textContent = t || ""; }
+
+function flipTop(pile) {
+  const top = pile[pile.length - 1];
+  if (top && !top.faceUp) top.faceUp = true;
+}
+function movingCards(src) {
+  if (src.kind === "waste") { const c = S.waste[S.waste.length - 1]; return c ? [c] : null; }
+  if (src.kind === "foundation") { const p = S.foundations[src.suit]; const c = p[p.length - 1]; return c ? [c] : null; }
+  if (src.kind === "tableau") {
+    const cards = S.tableau[src.pile].slice(src.index);
+    return isValidRun(cards) ? cards : null;
+  }
+  return null;
+}
+function removeFromSource(src, count) {
+  if (src.kind === "waste") S.waste.splice(S.waste.length - count, count);
+  else if (src.kind === "foundation") S.foundations[src.suit].splice(S.foundations[src.suit].length - count, count);
+  else if (src.kind === "tableau") { S.tableau[src.pile].splice(src.index, count); flipTop(S.tableau[src.pile]); }
+}
+function tryMove(src, dest) {
+  if (S.won) return false;
+  const cards = movingCards(src);
+  if (!cards || !cards.length) return false;
+  if (dest.kind === "foundation") {
+    if (cards.length !== 1) return false;
+    if (cards[0].suit !== dest.suit) return false;
+    if (!canPlaceOnFoundation(cards[0], S.foundations[dest.suit])) return false;
+  } else if (dest.kind === "tableau") {
+    if (src.kind === "tableau" && src.pile === dest.pile) return false;
+    if (!canPlaceOnTableau(cards[0], S.tableau[dest.pile])) return false;
+  } else return false;
+  pushHistory(); markStarted();
+  removeFromSource(src, cards.length);
+  if (dest.kind === "foundation") S.foundations[dest.suit].push(...cards);
+  else S.tableau[dest.pile].push(...cards);
+  S.moves++;
+  sel = null; hintState = null;
+  afterAction();
+  return true;
+}
+function afterAction() { checkWin(); render(); }
+function checkWin() {
+  const total = S.foundations.reduce((a, p) => a + p.length, 0);
+  if (total === 52 && !S.won) {
+    S.won = true; S.elapsed = S.started ? Date.now() - S.startTime : 0; stopAuto();
+    $("win-detail").textContent = t("win_detail", { seed: S.seed, moves: S.moves, time: fmtTime(S.elapsed) });
+    $("win").style.display = "flex";
+    confetti();
+  }
+}
+function confetti() {
+  const colors = ["#f5c542", "#37e0a0", "#ff6b81", "#4da3ff", "#ffffff"];
+  for (let i = 0; i < 42; i++) {
+    const d = document.createElement("div");
+    d.className = "confetti";
+    d.style.left = Math.random() * 100 + "vw";
+    d.style.background = colors[i % colors.length];
+    document.body.appendChild(d);
+    d.animate(
+      [{ transform: "translateY(0) rotate(0deg)", opacity: 1 },
+       { transform: "translateY(105vh) rotate(" + (360 + Math.random() * 360) + "deg)", opacity: 0.7 }],
+      { duration: 2200 + Math.random() * 1600, easing: "cubic-bezier(.2,.7,.4,1)" }
+    ).onfinish = () => d.remove();
+  }
+}
+function drawStock() {
+  if (S.won) return;
+  if (S.stock.length) {
+    pushHistory(); markStarted();
+    const c = S.stock.pop(); c.faceUp = true; S.waste.push(c); S.moves++;
+    sel = null; afterAction();
+  } else if (S.waste.length) {
+    pushHistory(); markStarted();
+    S.stock = S.waste.slice().reverse().map((c) => ({ suit: c.suit, rank: c.rank, faceUp: false }));
+    S.waste = []; S.moves++;
+    sel = null; setMsg(t("msg_stock_recycled"));
+    afterAction();
+  }
+}
+function autoMove(src) {
+  const cards = movingCards(src);
+  if (!cards) return false;
+  const top = cards[cards.length - 1];
+  if (src.kind !== "foundation" && tryMove(src.kind === "tableau" ? { kind: "tableau", pile: src.pile, index: S.tableau[src.pile].length - 1 } : src, { kind: "foundation", suit: top.suit })) return true;
+  const first = cards[0];
+  for (let p = 0; p < 7; p++) {
+    if (src.kind === "tableau" && src.pile === p) continue;
+    if (src.kind === "tableau" && src.index === 0 && S.tableau[p].length === 0) continue;
+    if (canPlaceOnTableau(first, S.tableau[p])) return tryMove(src, { kind: "tableau", pile: p });
+  }
+  return false;
+}
+function findHint() {
+  const msgs = [];
+  for (let p = 0; p < 7; p++) {
+    const pile = S.tableau[p], top = pile[pile.length - 1];
+    if (top && pile.length > 1 && !pile[pile.length - 2].faceUp && canPlaceOnFoundation(top, S.foundations[top.suit]))
+      return { src: { kind: "tableau", pile: p, index: pile.length - 1 }, dest: { kind: "foundation", suit: top.suit }, text: t("hint_to_foundation_flip", { card: cardName(top) }) };
+  }
+  for (let p = 0; p < 7; p++) {
+    const pile = S.tableau[p];
+    for (let i = 1; i < pile.length; i++) {
+      if (pile[i - 1].faceUp || !isValidRun(pile.slice(i))) continue;
+      for (let d = 0; d < 7; d++) {
+        if (d !== p && canPlaceOnTableau(pile[i], S.tableau[d]))
+          return { src: { kind: "tableau", pile: p, index: i }, dest: { kind: "tableau", pile: d }, text: t("hint_move_stack_flip", { card: cardName(pile[i]) }) };
+      }
+    }
+  }
+  const wtop = S.waste[S.waste.length - 1];
+  if (wtop && canPlaceOnFoundation(wtop, S.foundations[wtop.suit]))
+    return { src: { kind: "waste" }, dest: { kind: "foundation", suit: wtop.suit }, text: t("hint_waste_to_foundation", { card: cardName(wtop) }) };
+  for (let p = 0; p < 7; p++) {
+    const pile = S.tableau[p], top = pile[pile.length - 1];
+    if (top && canPlaceOnFoundation(top, S.foundations[top.suit]))
+      return { src: { kind: "tableau", pile: p, index: pile.length - 1 }, dest: { kind: "foundation", suit: top.suit }, text: t("hint_to_foundation", { card: cardName(top) }) };
+  }
+  if (wtop) for (let d = 0; d < 7; d++)
+    if (canPlaceOnTableau(wtop, S.tableau[d]))
+      return { src: { kind: "waste" }, dest: { kind: "tableau", pile: d }, text: t("hint_waste_to_tableau", { card: cardName(wtop) }) };
+  for (let p = 0; p < 7; p++) {
+    const pile = S.tableau[p];
+    for (let i = 0; i < pile.length; i++) {
+      if (!isValidRun(pile.slice(i))) continue;
+      for (let d = 0; d < 7; d++) {
+        if (d === p || !canPlaceOnTableau(pile[i], S.tableau[d])) continue;
+        if (i === 0 && S.tableau[d].length === 0) continue;
+        return { src: { kind: "tableau", pile: p, index: i }, dest: { kind: "tableau", pile: d }, text: t("hint_move_stack", { card: cardName(pile[i]) }) };
+      }
+    }
+  }
+  if (S.stock.length) return { src: null, dest: null, text: t("hint_draw_stock") };
+  if (S.waste.length) return { src: null, dest: null, text: t("hint_stock_empty") };
+  return { src: null, dest: null, text: t("hint_none", { undo: t("btn_undo") }) };
+}
+function stopAuto() { if (S && S.autoTimer) { clearInterval(S.autoTimer); S.autoTimer = null; } }
+function autoStep() {
+  let best = null;
+  const consider = (src, card) => {
+    if (canPlaceOnFoundation(card, S.foundations[card.suit]) && (!best || card.rank < best.card.rank)) best = { src, card };
+  };
+  for (let p = 0; p < 7; p++) { const pile = S.tableau[p], top = pile[pile.length - 1]; if (top) consider({ kind: "tableau", pile: p, index: pile.length - 1 }, top); }
+  const wtop = S.waste[S.waste.length - 1]; if (wtop) consider({ kind: "waste" }, wtop);
+  if (best) {
+    removeFromSource(best.src, 1);
+    S.foundations[best.card.suit].push(best.card);
+    S.moves++; afterAction();
+    if (S.won) stopAuto();
+    return;
+  }
+  if (S.stock.length) { const c = S.stock.pop(); c.faceUp = true; S.waste.push(c); S.moves++; render(); return; }
+  stopAuto();
+  if (!S.won) setMsg(t("msg_auto_stopped"));
+}
+function allFaceUp() { return S.tableau.every((p) => p.every((c) => c.faceUp)); }
+
+/* ---------- 描画 ---------- */
+function cardEl(card, attrs) {
+  const d = document.createElement("div");
+  d.className = "card" + (isRed(card.suit) ? " red" : "");
+  if (attrs) for (const k in attrs) d.dataset[k] = attrs[k];
+  const lab = rankLabel(card.rank), s = SUITS[card.suit];
+  d.innerHTML = '<div class="tl">' + lab + "<br>" + s + '</div><div class="pip">' + s + '</div><div class="br">' + lab + "<br>" + s + "</div>";
+  return d;
+}
+function isSelected(kind, pile, index) {
+  if (!sel) return false;
+  if (kind === "waste") return sel.kind === "waste";
+  if (kind === "foundation") return sel.kind === "foundation" && sel.suit === pile;
+  return sel.kind === "tableau" && sel.pile === pile && index >= sel.index;
+}
+function isHintSrc(kind, pile, index) {
+  if (!hintState || !hintState.src) return false;
+  const h = hintState.src;
+  if (kind === "waste") return h.kind === "waste";
+  if (kind === "foundation") return h.kind === "foundation" && h.suit === pile;
+  return h.kind === "tableau" && h.pile === pile && index >= h.index;
+}
+function render() {
+  $("st-seed").textContent = "#" + S.seed;
+  $("st-diff").textContent = diffLabel(S.diff);
+  $("st-moves").textContent = S.moves;
+  $("st-found").textContent = S.foundations.reduce((a, p) => a + p.length, 0);
+  $("btn-undo").disabled = !S.history.length;
+  $("btn-auto").disabled = S.won || !allFaceUp();
+
+  topRowEl.innerHTML = "";
+  // 山札
+  const sw = document.createElement("div");
+  sw.className = "stockwrap"; sw.dataset.action = "stock";
+  const ss = document.createElement("div"); ss.className = "slot";
+  if (S.stock.length) {
+    const back = document.createElement("div"); back.className = "card down"; back.style.top = "0"; ss.appendChild(back);
+    const badge = document.createElement("div"); badge.className = "stockcount"; badge.textContent = S.stock.length; sw.appendChild(badge);
+  } else {
+    const lab = document.createElement("div"); lab.className = "foundation-label"; lab.textContent = S.waste.length ? "↻" : ""; ss.appendChild(lab);
+  }
+  sw.appendChild(ss); topRowEl.appendChild(sw);
+  // 捨て札
+  const wp = document.createElement("div"); wp.className = "pile"; wp.style.height = "var(--ch)";
+  const ws = document.createElement("div"); ws.className = "slot"; wp.appendChild(ws);
+  const wtop = S.waste[S.waste.length - 1];
+  if (wtop) {
+    const el = cardEl(wtop, { kind: "waste" }); el.style.top = "0";
+    if (isSelected("waste")) el.classList.add("selected");
+    if (isHintSrc("waste")) el.classList.add("hintsrc");
+    wp.appendChild(el);
+  }
+  topRowEl.appendChild(wp);
+  const spacer = document.createElement("div"); topRowEl.appendChild(spacer);
+  // 組札
+  for (let s = 0; s < 4; s++) {
+    const fp = document.createElement("div"); fp.className = "pile"; fp.style.height = "var(--ch)";
+    const slot = document.createElement("div"); slot.className = "slot";
+    slot.dataset.drop = "foundation"; slot.dataset.suit = s;
+    if (hintState && hintState.dest && hintState.dest.kind === "foundation" && hintState.dest.suit === s) slot.classList.add("hintdst");
+    const lab = document.createElement("div"); lab.className = "foundation-label"; lab.textContent = SUITS[s]; slot.appendChild(lab);
+    fp.appendChild(slot);
+    const ftop = S.foundations[s][S.foundations[s].length - 1];
+    if (ftop) {
+      const el = cardEl(ftop, { kind: "foundation", suit: s }); el.style.top = "0";
+      if (isSelected("foundation", s)) el.classList.add("selected");
+      fp.appendChild(el);
+    }
+    topRowEl.appendChild(fp);
+  }
+  // 場札
+  tableauEl.innerHTML = "";
+  for (let p = 0; p < 7; p++) {
+    const pile = S.tableau[p];
+    const cont = document.createElement("div"); cont.className = "pile";
+    cont.dataset.drop = "tableau"; cont.dataset.pile = p;
+    const slot = document.createElement("div"); slot.className = "slot";
+    slot.dataset.drop = "tableau"; slot.dataset.pile = p;
+    if (hintState && hintState.dest && hintState.dest.kind === "tableau" && hintState.dest.pile === p && !pile.length) slot.classList.add("hintdst");
+    cont.appendChild(slot);
+    let acc = 0;
+    pile.forEach((card, i) => {
+      let el;
+      if (!card.faceUp) { el = document.createElement("div"); el.className = "card down"; el.dataset.kind = "tableau"; el.dataset.pile = p; el.dataset.index = i; }
+      else {
+        el = cardEl(card, { kind: "tableau", pile: p, index: i });
+        if (isSelected("tableau", p, i)) el.classList.add("selected");
+        if (isHintSrc("tableau", p, i)) el.classList.add("hintsrc");
+        if (hintState && hintState.dest && hintState.dest.kind === "tableau" && hintState.dest.pile === p && i === pile.length - 1) el.classList.add("hintdst");
+      }
+      el.style.top = "calc(var(--cw) * " + acc.toFixed(3) + ")";
+      el.style.zIndex = i + 1;
+      cont.appendChild(el);
+      acc += card.faceUp ? 0.34 : 0.2;
+    });
+    const lastOff = pile.length ? acc - (pile[pile.length - 1].faceUp ? 0.34 : 0.2) : 0;
+    cont.style.height = "calc(var(--ch) + var(--cw) * " + lastOff.toFixed(3) + ")";
+    tableauEl.appendChild(cont);
+  }
+}
+
+/* ---------- 入力（クリック＆ドラッグ） ---------- */
+function srcFromEl(el) {
+  if (!el || !el.dataset || !el.dataset.kind) return null;
+  const k = el.dataset.kind;
+  if (k === "waste") return { kind: "waste" };
+  if (k === "foundation") return { kind: "foundation", suit: +el.dataset.suit };
+  if (k === "tableau") return { kind: "tableau", pile: +el.dataset.pile, index: +el.dataset.index };
+  return null;
+}
+function destFromEl(el) {
+  const drop = el.closest("[data-drop]");
+  if (drop) {
+    if (drop.dataset.drop === "foundation") return { kind: "foundation", suit: +drop.dataset.suit };
+    return { kind: "tableau", pile: +drop.dataset.pile };
+  }
+  const card = el.closest(".card");
+  if (card) {
+    const src = srcFromEl(card);
+    if (src && src.kind === "tableau") return { kind: "tableau", pile: src.pile };
+    if (src && src.kind === "foundation") return { kind: "foundation", suit: src.suit };
+  }
+  return null;
+}
+let pending = null, drag = null, lastTap = { key: "", time: 0 };
+function srcKey(src) { return src.kind + ":" + (src.pile ?? "") + ":" + (src.index ?? "") + ":" + (src.suit ?? ""); }
+
+boardEl.addEventListener("pointerdown", (e) => {
+  if (S.won) return;
+  const stockEl = e.target.closest('[data-action="stock"]');
+  pending = { x: e.clientX, y: e.clientY, src: srcFromEl(e.target.closest(".card")), stock: !!stockEl, target: e.target };
+});
+function sourceEls(src) {
+  if (src.kind === "tableau") {
+    return Array.from(tableauEl.querySelectorAll('.pile[data-pile="' + src.pile + '"] .card'))
+      .filter((el) => +el.dataset.index >= src.index);
+  }
+  if (src.kind === "waste") return Array.from(topRowEl.querySelectorAll('.card[data-kind="waste"]'));
+  if (src.kind === "foundation") return Array.from(topRowEl.querySelectorAll('.card[data-kind="foundation"][data-suit="' + src.suit + '"]'));
+  return [];
+}
+boardEl.addEventListener("pointermove", (e) => {
+  if (!pending || drag || !pending.src) return;
+  if (Math.hypot(e.clientX - pending.x, e.clientY - pending.y) < 9) return;
+  const cards = movingCards(pending.src);
+  if (!cards) return;
+  const srcEls = sourceEls(pending.src);
+  const firstRect = srcEls.length ? srcEls[0].getBoundingClientRect() : null;
+  drag = { src: pending.src };
+  // 掴んだ位置がそのままカーソルにくっつくよう、カード内でのオフセットを保持する
+  drag.dx = firstRect ? pending.x - firstRect.left : 30;
+  drag.dy = firstRect ? pending.y - firstRect.top : 20;
+  drag.gap = firstRect ? Math.round(firstRect.width * 0.34) : 26;
+  // 元のカードはドラッグ中だけ隠す（下のカードが見えるように）
+  srcEls.forEach((el) => { el.style.visibility = "hidden"; });
+  dragLayer.innerHTML = "";
+  cards.forEach((c, i) => {
+    const el = cardEl(c, {});
+    el.style.left = (pending.x - drag.dx) + "px";
+    el.style.top = (pending.y - drag.dy + i * drag.gap) + "px";
+    dragLayer.appendChild(el);
+  });
+  drag.els = Array.from(dragLayer.children);
+});
+document.addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  drag.els.forEach((el, i) => { el.style.left = (e.clientX - drag.dx) + "px"; el.style.top = (e.clientY - drag.dy + i * drag.gap) + "px"; });
+});
+function endDrag(e, commit) {
+  dragLayer.style.display = "none";
+  const under = commit ? document.elementFromPoint(e.clientX, e.clientY) : null;
+  dragLayer.style.display = "";
+  dragLayer.innerHTML = "";
+  const dest = under ? destFromEl(under) : null;
+  const src = drag.src; drag = null; pending = null;
+  if (dest) tryMove(src, dest);
+  render();
+}
+document.addEventListener("pointerup", (e) => {
+  if (drag) { endDrag(e, true); return; }
+  if (!pending) return;
+  const p = pending; pending = null;
+  if (p.stock) { sel = null; drawStock(); return; }
+  handleClick(e, p);
+});
+document.addEventListener("pointercancel", (e) => {
+  if (drag) { endDrag(e, false); return; }
+  pending = null;
+});
+function handleClick(e, p) {
+  const clickedCard = e.target.closest(".card");
+  const clickedSrc = srcFromEl(clickedCard);
+  // 置き先として解釈
+  if (sel) {
+    const dest = destFromEl(e.target);
+    if (dest && !(clickedSrc && srcKey(clickedSrc) === srcKey(sel) && sel.kind !== "tableau")) {
+      const sameSrc = clickedSrc && sel.kind === "tableau" && clickedSrc.kind === "tableau" && clickedSrc.pile === sel.pile;
+      if (!sameSrc && tryMove(sel, dest)) return;
+    }
+  }
+  if (!clickedSrc) { sel = null; render(); return; }
+  // ダブルタップ／ダブルクリックで自動移動
+  const key = srcKey(clickedSrc), now = Date.now();
+  const isTop = clickedSrc.kind === "waste" || clickedSrc.kind === "foundation" ||
+    (clickedSrc.kind === "tableau" && clickedSrc.index === S.tableau[clickedSrc.pile].length - 1);
+  if (isTop && lastTap.key === key && now - lastTap.time < 380) {
+    lastTap = { key: "", time: 0 };
+    sel = null;
+    if (!autoMove(clickedSrc)) setMsg(t("msg_no_destination"));
+    render();
+    return;
+  }
+  lastTap = { key, time: now };
+  const cards = movingCards(clickedSrc);
+  if (cards) { sel = clickedSrc; setMsg(cards.length > 1 ? t("msg_selected_stack", { card: cardName(cards[0]) }) : t("msg_selected_card", { card: cardName(cards[0]) })); }
+  else sel = null;
+  render();
+}
+boardEl.addEventListener("contextmenu", (e) => e.preventDefault());
+
+$("btn-new").addEventListener("click", () => {
+  if (S.moves > 0 && !S.won && !confirm(t("confirm_discard_new"))) return;
+  newGame();
+});
+$("btn-restart").addEventListener("click", () => {
+  stopAuto(); S.won = false; $("win").style.display = "none";
+  S.history = []; S.started = false; S.elapsed = 0; restore(initialSnap); setMsg(t("msg_restarted", { seed: S.seed })); render();
+});
+$("btn-undo").addEventListener("click", () => {
+  stopAuto();
+  if (!S.history.length) return;
+  S.won = false; $("win").style.display = "none";
+  restore(S.history.pop()); setMsg(t("msg_undone")); render();
+});
+$("btn-hint").addEventListener("click", () => {
+  hintState = findHint();
+  setMsg(hintState.text);
+  render();
+  setTimeout(() => { if (hintState) { hintState = null; render(); } }, 1800);
+});
+$("btn-auto").addEventListener("click", () => {
+  if (S.autoTimer) { stopAuto(); render(); return; }
+  if (!allFaceUp()) return;
+  pushHistory();
+  S.autoTimer = setInterval(autoStep, 110);
+});
+$("btn-win-new").addEventListener("click", () => newGame());
+document.querySelectorAll(".diffs button").forEach((b) => {
+  b.addEventListener("click", () => {
+    if (b.dataset.diff === currentDiff) { newGame(); return; }
+    if (S && S.moves > 0 && !S.won && !confirm(t("confirm_discard_diff", { diff: diffLabel(b.dataset.diff) }))) return;
+    newGame(null, b.dataset.diff);
+  });
+});
+
+setInterval(() => {
+  if (S && S.started && !S.won) $("st-time").textContent = fmtTime(Date.now() - S.startTime);
+  else if (S) $("st-time").textContent = fmtTime(S.elapsed || 0);
+}, 500);
+
+$("lang-select").addEventListener("change", (e) => applyLang(e.target.value));
+applyLang(LANG);
+newGame();
+</script>
+</body>
+</html>
