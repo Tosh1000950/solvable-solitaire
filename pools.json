@@ -2,685 +2,855 @@
  "normal": [
   {
    "seed": 200001,
-   "nodes": 627
+   "nodes": 627,
+   "par": 133
   },
   {
    "seed": 200002,
-   "nodes": 749
+   "nodes": 749,
+   "par": 133
   },
   {
    "seed": 200003,
-   "nodes": 620
+   "nodes": 620,
+   "par": 124
   },
   {
    "seed": 200004,
-   "nodes": 2795
+   "nodes": 2795,
+   "par": 113
   },
   {
    "seed": 200005,
-   "nodes": 1011
+   "nodes": 1011,
+   "par": 113
   },
   {
    "seed": 200006,
-   "nodes": 387
+   "nodes": 387,
+   "par": 119
   },
   {
    "seed": 200007,
-   "nodes": 891
+   "nodes": 891,
+   "par": 123
   },
   {
    "seed": 200010,
-   "nodes": 668
+   "nodes": 668,
+   "par": 124
   },
   {
    "seed": 200014,
-   "nodes": 850
+   "nodes": 850,
+   "par": 117
   },
   {
    "seed": 200016,
-   "nodes": 315
+   "nodes": 315,
+   "par": 132
   },
   {
    "seed": 200017,
-   "nodes": 512
+   "nodes": 512,
+   "par": 132
   },
   {
    "seed": 200021,
-   "nodes": 946
+   "nodes": 946,
+   "par": 123
   },
   {
    "seed": 200022,
-   "nodes": 573
+   "nodes": 573,
+   "par": 133
   },
   {
    "seed": 200025,
-   "nodes": 485
+   "nodes": 485,
+   "par": 125
   },
   {
    "seed": 200029,
-   "nodes": 450
+   "nodes": 450,
+   "par": 150
   },
   {
    "seed": 200031,
-   "nodes": 2702
+   "nodes": 2702,
+   "par": 149
   },
   {
    "seed": 200032,
-   "nodes": 341
+   "nodes": 341,
+   "par": 142
   },
   {
    "seed": 200033,
-   "nodes": 232
+   "nodes": 232,
+   "par": 113
   },
   {
    "seed": 200035,
-   "nodes": 415
+   "nodes": 415,
+   "par": 103
   },
   {
    "seed": 200037,
-   "nodes": 574
+   "nodes": 574,
+   "par": 139
   },
   {
    "seed": 200038,
-   "nodes": 922
+   "nodes": 922,
+   "par": 120
   },
   {
    "seed": 200040,
-   "nodes": 1066
+   "nodes": 1066,
+   "par": 130
   },
   {
    "seed": 200041,
-   "nodes": 869
+   "nodes": 869,
+   "par": 120
   },
   {
    "seed": 200042,
-   "nodes": 484
+   "nodes": 484,
+   "par": 121
   },
   {
    "seed": 200044,
-   "nodes": 604
+   "nodes": 604,
+   "par": 141
   },
   {
    "seed": 200045,
-   "nodes": 341
+   "nodes": 341,
+   "par": 124
   },
   {
    "seed": 200046,
-   "nodes": 761
+   "nodes": 761,
+   "par": 129
   },
   {
    "seed": 200047,
-   "nodes": 480
+   "nodes": 480,
+   "par": 118
   },
   {
    "seed": 200049,
-   "nodes": 1523
+   "nodes": 1523,
+   "par": 128
   },
   {
    "seed": 200050,
-   "nodes": 2237
+   "nodes": 2237,
+   "par": 126
   },
   {
    "seed": 200051,
-   "nodes": 2205
+   "nodes": 2205,
+   "par": 133
   },
   {
    "seed": 200057,
-   "nodes": 251
+   "nodes": 251,
+   "par": 126
   },
   {
    "seed": 200058,
-   "nodes": 337
+   "nodes": 337,
+   "par": 128
   },
   {
    "seed": 200059,
-   "nodes": 555
+   "nodes": 555,
+   "par": 128
   },
   {
    "seed": 200060,
-   "nodes": 1457
+   "nodes": 1457,
+   "par": 143
   },
   {
    "seed": 200063,
-   "nodes": 241
+   "nodes": 241,
+   "par": 114
   },
   {
    "seed": 200064,
-   "nodes": 788
+   "nodes": 788,
+   "par": 142
   },
   {
    "seed": 200065,
-   "nodes": 362
+   "nodes": 362,
+   "par": 120
   },
   {
    "seed": 200069,
-   "nodes": 834
+   "nodes": 834,
+   "par": 116
   },
   {
    "seed": 200070,
-   "nodes": 716
+   "nodes": 716,
+   "par": 119
   },
   {
    "seed": 200071,
-   "nodes": 360
+   "nodes": 360,
+   "par": 141
   },
   {
    "seed": 200073,
-   "nodes": 322
+   "nodes": 322,
+   "par": 104
   },
   {
    "seed": 200074,
-   "nodes": 1782
+   "nodes": 1782,
+   "par": 150
   },
   {
    "seed": 200076,
-   "nodes": 974
+   "nodes": 974,
+   "par": 134
   },
   {
    "seed": 200078,
-   "nodes": 586
+   "nodes": 586,
+   "par": 117
   },
   {
    "seed": 200080,
-   "nodes": 679
+   "nodes": 679,
+   "par": 126
   },
   {
    "seed": 200081,
-   "nodes": 331
+   "nodes": 331,
+   "par": 112
   },
   {
    "seed": 200085,
-   "nodes": 586
+   "nodes": 586,
+   "par": 129
   },
   {
    "seed": 200087,
-   "nodes": 961
+   "nodes": 961,
+   "par": 118
   },
   {
    "seed": 200088,
-   "nodes": 560
+   "nodes": 560,
+   "par": 110
   },
   {
    "seed": 200089,
-   "nodes": 1852
+   "nodes": 1852,
+   "par": 114
   },
   {
    "seed": 200090,
-   "nodes": 632
+   "nodes": 632,
+   "par": 118
   },
   {
    "seed": 200091,
-   "nodes": 739
+   "nodes": 739,
+   "par": 119
   },
   {
    "seed": 200092,
-   "nodes": 980
+   "nodes": 980,
+   "par": 153
   },
   {
    "seed": 200094,
-   "nodes": 704
+   "nodes": 704,
+   "par": 124
   },
   {
    "seed": 200095,
-   "nodes": 611
+   "nodes": 611,
+   "par": 118
   },
   {
    "seed": 200096,
-   "nodes": 1567
+   "nodes": 1567,
+   "par": 126
   },
   {
    "seed": 200101,
-   "nodes": 401
+   "nodes": 401,
+   "par": 128
   },
   {
    "seed": 200102,
-   "nodes": 2099
+   "nodes": 2099,
+   "par": 138
   },
   {
    "seed": 200110,
-   "nodes": 1099
+   "nodes": 1099,
+   "par": 106
   },
   {
    "seed": 200111,
-   "nodes": 272
+   "nodes": 272,
+   "par": 123
   },
   {
    "seed": 200112,
-   "nodes": 258
+   "nodes": 258,
+   "par": 121
   },
   {
    "seed": 200114,
-   "nodes": 1059
+   "nodes": 1059,
+   "par": 116
   },
   {
    "seed": 200116,
-   "nodes": 437
+   "nodes": 437,
+   "par": 128
   },
   {
    "seed": 200117,
-   "nodes": 523
+   "nodes": 523,
+   "par": 112
   },
   {
    "seed": 200118,
-   "nodes": 1621
+   "nodes": 1621,
+   "par": 114
   },
   {
    "seed": 200119,
-   "nodes": 370
+   "nodes": 370,
+   "par": 120
   },
   {
    "seed": 200124,
-   "nodes": 1078
+   "nodes": 1078,
+   "par": 135
   },
   {
    "seed": 200126,
-   "nodes": 1540
+   "nodes": 1540,
+   "par": 120
   },
   {
    "seed": 200129,
-   "nodes": 360
+   "nodes": 360,
+   "par": 114
   },
   {
    "seed": 200132,
-   "nodes": 271
+   "nodes": 271,
+   "par": 114
   },
   {
    "seed": 200133,
-   "nodes": 1305
+   "nodes": 1305,
+   "par": 157
   },
   {
    "seed": 200134,
-   "nodes": 426
+   "nodes": 426,
+   "par": 133
   },
   {
    "seed": 200136,
-   "nodes": 997
+   "nodes": 997,
+   "par": 116
   },
   {
    "seed": 200142,
-   "nodes": 630
+   "nodes": 630,
+   "par": 119
   },
   {
    "seed": 200150,
-   "nodes": 847
+   "nodes": 847,
+   "par": 118
   },
   {
    "seed": 200153,
-   "nodes": 1540
+   "nodes": 1540,
+   "par": 127
   },
   {
    "seed": 200154,
-   "nodes": 1571
+   "nodes": 1571,
+   "par": 113
   },
   {
    "seed": 200155,
-   "nodes": 534
+   "nodes": 534,
+   "par": 140
   },
   {
    "seed": 200157,
-   "nodes": 722
+   "nodes": 722,
+   "par": 129
   },
   {
    "seed": 200160,
-   "nodes": 434
+   "nodes": 434,
+   "par": 130
   },
   {
    "seed": 200161,
-   "nodes": 524
+   "nodes": 524,
+   "par": 117
   },
   {
    "seed": 200162,
-   "nodes": 221
+   "nodes": 221,
+   "par": 114
   },
   {
    "seed": 200164,
-   "nodes": 623
+   "nodes": 623,
+   "par": 112
   },
   {
    "seed": 200165,
-   "nodes": 2290
+   "nodes": 2290,
+   "par": 127
   },
   {
    "seed": 200166,
-   "nodes": 907
+   "nodes": 907,
+   "par": 114
   },
   {
    "seed": 200169,
-   "nodes": 3221
+   "nodes": 3221,
+   "par": 106
   },
   {
    "seed": 200170,
-   "nodes": 577
+   "nodes": 577,
+   "par": 117
   },
   {
    "seed": 200174,
-   "nodes": 240
+   "nodes": 240,
+   "par": 105
   },
   {
    "seed": 200179,
-   "nodes": 1057
+   "nodes": 1057,
+   "par": 114
   },
   {
    "seed": 200180,
-   "nodes": 1084
+   "nodes": 1084,
+   "par": 139
   },
   {
    "seed": 200181,
-   "nodes": 1241
+   "nodes": 1241,
+   "par": 119
   },
   {
    "seed": 200184,
-   "nodes": 1271
+   "nodes": 1271,
+   "par": 133
   },
   {
    "seed": 200185,
-   "nodes": 732
+   "nodes": 732,
+   "par": 124
   },
   {
    "seed": 200186,
-   "nodes": 1625
+   "nodes": 1625,
+   "par": 137
   },
   {
    "seed": 200187,
-   "nodes": 326
+   "nodes": 326,
+   "par": 128
   },
   {
    "seed": 200188,
-   "nodes": 367
+   "nodes": 367,
+   "par": 128
   },
   {
    "seed": 200190,
-   "nodes": 670
+   "nodes": 670,
+   "par": 126
   },
   {
    "seed": 200191,
-   "nodes": 550
+   "nodes": 550,
+   "par": 140
   },
   {
    "seed": 200194,
-   "nodes": 2048
+   "nodes": 2048,
+   "par": 130
   },
   {
    "seed": 200195,
-   "nodes": 518
+   "nodes": 518,
+   "par": 135
   },
   {
    "seed": 200196,
-   "nodes": 728
+   "nodes": 728,
+   "par": 128
   },
   {
    "seed": 200197,
-   "nodes": 968
+   "nodes": 968,
+   "par": 121
   },
   {
    "seed": 200198,
-   "nodes": 738
+   "nodes": 738,
+   "par": 143
   },
   {
    "seed": 200199,
-   "nodes": 599
+   "nodes": 599,
+   "par": 117
   },
   {
    "seed": 200200,
-   "nodes": 471
+   "nodes": 471,
+   "par": 112
   },
   {
    "seed": 200202,
-   "nodes": 430
+   "nodes": 430,
+   "par": 109
   },
   {
    "seed": 200204,
-   "nodes": 367
+   "nodes": 367,
+   "par": 128
   },
   {
    "seed": 200205,
-   "nodes": 474
+   "nodes": 474,
+   "par": 124
   },
   {
    "seed": 200209,
-   "nodes": 186
+   "nodes": 186,
+   "par": 132
   },
   {
    "seed": 200211,
-   "nodes": 871
+   "nodes": 871,
+   "par": 116
   },
   {
    "seed": 200215,
-   "nodes": 1020
+   "nodes": 1020,
+   "par": 148
   },
   {
    "seed": 200217,
-   "nodes": 1647
+   "nodes": 1647,
+   "par": 126
   },
   {
    "seed": 200218,
-   "nodes": 873
+   "nodes": 873,
+   "par": 141
   },
   {
    "seed": 200220,
-   "nodes": 604
+   "nodes": 604,
+   "par": 114
   },
   {
    "seed": 200221,
-   "nodes": 405
+   "nodes": 405,
+   "par": 122
   },
   {
    "seed": 200223,
-   "nodes": 721
+   "nodes": 721,
+   "par": 157
   },
   {
    "seed": 200225,
-   "nodes": 2095
+   "nodes": 2095,
+   "par": 119
   },
   {
    "seed": 200227,
-   "nodes": 662
+   "nodes": 662,
+   "par": 133
   },
   {
    "seed": 200228,
-   "nodes": 1150
+   "nodes": 1150,
+   "par": 119
   }
  ],
  "hard": [
   {
    "seed": 200052,
-   "nodes": 14987
+   "nodes": 14987,
+   "par": 112
   },
   {
    "seed": 200054,
-   "nodes": 7853
+   "nodes": 7853,
+   "par": 127
   },
   {
    "seed": 200068,
-   "nodes": 9059
+   "nodes": 9059,
+   "par": 131
   },
   {
    "seed": 200104,
-   "nodes": 6342
+   "nodes": 6342,
+   "par": 111
   },
   {
    "seed": 200120,
-   "nodes": 6078
+   "nodes": 6078,
+   "par": 122
   },
   {
    "seed": 200127,
-   "nodes": 20280
+   "nodes": 20280,
+   "par": 115
   },
   {
    "seed": 200147,
-   "nodes": 33137
+   "nodes": 33137,
+   "par": 114
   },
   {
    "seed": 200151,
-   "nodes": 40394
+   "nodes": 40394,
+   "par": 132
   },
   {
    "seed": 200168,
-   "nodes": 23706
+   "nodes": 23706,
+   "par": 131
   },
   {
    "seed": 200176,
-   "nodes": 13590
+   "nodes": 13590,
+   "par": 122
   },
   {
    "seed": 200222,
-   "nodes": 18744
+   "nodes": 18744,
+   "par": 135
   },
   {
    "seed": 200226,
-   "nodes": 44815
+   "nodes": 44815,
+   "par": 123
   },
   {
    "seed": 200232,
-   "nodes": 20253
+   "nodes": 20253,
+   "par": 116
   },
   {
    "seed": 200241,
-   "nodes": 13924
+   "nodes": 13924,
+   "par": 123
   },
   {
    "seed": 200246,
-   "nodes": 10663
+   "nodes": 10663,
+   "par": 132
   },
   {
    "seed": 200248,
-   "nodes": 30426
+   "nodes": 30426,
+   "par": 130
   },
   {
    "seed": 200255,
-   "nodes": 24429
+   "nodes": 24429,
+   "par": 123
   },
   {
    "seed": 200257,
-   "nodes": 21165
+   "nodes": 21165,
+   "par": 141
   },
   {
    "seed": 200263,
-   "nodes": 11349
+   "nodes": 11349,
+   "par": 125
   },
   {
    "seed": 200292,
-   "nodes": 25193
+   "nodes": 25193,
+   "par": 135
   },
   {
    "seed": 200303,
-   "nodes": 10389
+   "nodes": 10389,
+   "par": 122
   },
   {
    "seed": 200344,
-   "nodes": 7969
+   "nodes": 7969,
+   "par": 110
   },
   {
    "seed": 200345,
-   "nodes": 13076
+   "nodes": 13076,
+   "par": 138
   },
   {
    "seed": 200371,
-   "nodes": 55581
+   "nodes": 55581,
+   "par": 149
   },
   {
    "seed": 200387,
-   "nodes": 15195
+   "nodes": 15195,
+   "par": 124
   },
   {
    "seed": 200393,
-   "nodes": 8869
+   "nodes": 8869,
+   "par": 136
   },
   {
    "seed": 200398,
-   "nodes": 28929
+   "nodes": 28929,
+   "par": 144
   },
   {
    "seed": 200405,
-   "nodes": 25056
+   "nodes": 25056,
+   "par": 151
   },
   {
    "seed": 200407,
-   "nodes": 10615
+   "nodes": 10615,
+   "par": 122
   },
   {
    "seed": 200435,
-   "nodes": 16537
+   "nodes": 16537,
+   "par": 118
   },
   {
    "seed": 200448,
-   "nodes": 7995
+   "nodes": 7995,
+   "par": 127
   },
   {
    "seed": 200451,
-   "nodes": 35737
+   "nodes": 35737,
+   "par": 116
   },
   {
    "seed": 200457,
-   "nodes": 24764
+   "nodes": 24764,
+   "par": 122
   },
   {
    "seed": 200458,
-   "nodes": 52979
+   "nodes": 52979,
+   "par": 119
   },
   {
    "seed": 200471,
-   "nodes": 33839
+   "nodes": 33839,
+   "par": 131
   },
   {
    "seed": 200492,
-   "nodes": 17320
+   "nodes": 17320,
+   "par": 137
   },
   {
    "seed": 200516,
-   "nodes": 37866
+   "nodes": 37866,
+   "par": 145
   },
   {
    "seed": 200549,
-   "nodes": 9624
+   "nodes": 9624,
+   "par": 156
   },
   {
    "seed": 200561,
-   "nodes": 26987
+   "nodes": 26987,
+   "par": 117
   },
   {
    "seed": 200565,
-   "nodes": 47903
+   "nodes": 47903,
+   "par": 133
   },
   {
    "seed": 200598,
-   "nodes": 19396
+   "nodes": 19396,
+   "par": 133
   },
   {
    "seed": 200606,
-   "nodes": 40514
+   "nodes": 40514,
+   "par": 139
   },
   {
    "seed": 200612,
-   "nodes": 37545
+   "nodes": 37545,
+   "par": 115
   },
   {
    "seed": 200615,
-   "nodes": 52181
+   "nodes": 52181,
+   "par": 150
   },
   {
    "seed": 200616,
-   "nodes": 41828
+   "nodes": 41828,
+   "par": 120
   },
   {
    "seed": 200629,
-   "nodes": 21871
+   "nodes": 21871,
+   "par": 133
   },
   {
    "seed": 200635,
-   "nodes": 53065
+   "nodes": 53065,
+   "par": 138
   },
   {
    "seed": 200643,
-   "nodes": 12046
+   "nodes": 12046,
+   "par": 125
   },
   {
    "seed": 200666,
-   "nodes": 9402
+   "nodes": 9402,
+   "par": 126
   },
   {
    "seed": 200669,
-   "nodes": 30687
+   "nodes": 30687,
+   "par": 116
   }
  ]
 }
