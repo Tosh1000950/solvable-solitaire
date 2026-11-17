@@ -39,12 +39,55 @@
   .controls button:hover{ background:rgba(255,255,255,.25); }
   .controls button:disabled{ opacity:.4; cursor:default; }
   .controls button.primary{ background:#f5c542; color:#3a2c00; border-color:#f5c542; font-weight:700; }
-  .langrow{ display:flex; justify-content:center; padding:2px 8px 0; }
+  .langrow{ display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; padding:2px 8px 0; }
   .langrow select{
     border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff;
     border-radius:999px; padding:5px 10px; font-size:12px; cursor:pointer; font-family:inherit;
   }
   .langrow select option{ color:#111; }
+  .sfxbar{
+    display:inline-flex; align-items:center; gap:6px;
+    border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.1);
+    border-radius:999px; padding:3px 10px 3px 6px;
+  }
+  .sfxbar button{
+    border:none; background:transparent; color:#fff; cursor:pointer;
+    font-size:14px; line-height:1; padding:2px 4px; border-radius:999px;
+  }
+  .sfxbar button:hover{ background:rgba(255,255,255,.18); }
+  .sfxbar input[type="range"]{
+    width:68px; accent-color:#f5c542; cursor:pointer; height:4px; margin:0;
+  }
+  .replay-bar{
+    display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap;
+    max-width:680px; margin:0 auto 6px; padding:6px 12px;
+    border-radius:12px; background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.25);
+    font-size:12px;
+  }
+  .replay-bar[hidden]{ display:none; }
+  .replay-bar .replay-tag{ font-weight:700; color:#ffe9a8; }
+  .replay-bar .replay-prog{ font-variant-numeric: tabular-nums; opacity:.9; min-width:54px; text-align:center; }
+  .replay-bar button{
+    border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.14); color:#fff;
+    border-radius:999px; padding:4px 10px; font-size:12px; cursor:pointer; font-family:inherit;
+  }
+  .replay-bar button:hover{ background:rgba(255,255,255,.26); }
+  .replay-bar button.active{ background:#f5c542; color:#3a2c00; border-color:#f5c542; font-weight:700; }
+  .replay-bar button.stop{ border-color:rgba(255,140,140,.55); background:rgba(210,50,65,.35); }
+  .replay-speeds{ display:inline-flex; gap:4px; }
+  .deadend-banner{
+    display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap;
+    max-width:680px; margin:0 auto 8px; padding:7px 12px;
+    border-radius:10px; background:rgba(70,28,12,.88); border:1px solid #f5a642;
+    color:#ffe9c4; font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,.35);
+  }
+  .deadend-banner[hidden]{ display:none; }
+  .deadend-banner button{
+    border:1px solid rgba(255,255,255,.4); background:rgba(255,255,255,.16); color:#fff;
+    border-radius:999px; padding:4px 11px; font-size:12px; cursor:pointer; font-family:inherit; font-weight:700;
+  }
+  .deadend-banner button.undo-cta{ background:#f5c542; color:#3a2c00; border-color:#f5c542; }
+  .deadend-banner button.close-x{ background:transparent; border:none; padding:2px 6px; opacity:.8; }
   #msg{ text-align:center; min-height:1.5em; font-size:13px; color:#ffe9a8; padding:0 10px 6px; }
   #board{
     width: calc(var(--cw) * 7 + var(--gap) * 6);
@@ -73,7 +116,7 @@
     border:2px solid #dfe8f5; cursor:default;
   }
   .card.selected{ outline:3px solid #f5c542; outline-offset:-1px; z-index:50 !important; }
-  .card.hintsrc{ outline:3px solid #37e0a0; outline-offset:-1px; }
+  .card.hintsrc, .slot.hintsrc{ outline:3px solid #37e0a0; outline-offset:-1px; }
   .slot.hintdst, .card.hintdst{ outline:3px solid #37e0a0; outline-offset:2px; }
   .toprow .card{ position:absolute; top:0; }
   .stockwrap{ position:relative; width:var(--cw); height:var(--ch); }
@@ -101,6 +144,10 @@
     margin-top:14px; border:none; background:#177245; color:#fff; border-radius:999px;
     padding:10px 22px; font-size:15px; cursor:pointer; font-family:inherit; font-weight:700;
   }
+  #win .win-actions{ display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  #win .win-actions button{ margin-top:0; }
+  #win button.secondary{ background:#e6eef0; color:#123; }
+  #win button[hidden], #win p[hidden]{ display:none; }
   .confetti{ position:fixed; top:-12px; width:10px; height:14px; z-index:1900; pointer-events:none; }
   footer{
     max-width:760px; margin:0 auto; padding:4px 16px 30px; font-size:12px; line-height:1.7; opacity:.9;
@@ -123,6 +170,10 @@
       <option value="pt-BR">Português (Brasil)</option>
       <option value="hi">हिन्दी</option>
     </select></label>
+    <div class="sfxbar">
+      <button id="btn-mute" type="button" aria-pressed="false" aria-label="消音にする" title="消音にする">🔊</button>
+      <input id="vol-slider" type="range" min="0" max="100" step="1" value="25" aria-label="効果音の音量">
+    </div>
   </div>
   <div class="stats">
     <span><span data-i18n="stat_deal">配布番号</span> <b id="st-seed">-</b></span>
@@ -144,6 +195,23 @@
     <button id="btn-undo" data-i18n="btn_undo">一手戻す</button>
     <button id="btn-hint" data-i18n="btn_hint">ヒント</button>
     <button id="btn-auto" data-i18n="btn_auto">自動回収</button>
+    <button id="btn-replay" data-i18n="btn_replay" disabled>模範解答</button>
+  </div>
+  <div id="replay-bar" class="replay-bar" hidden>
+    <span class="replay-tag" data-i18n="replay_label">模範解答リプレイ</span>
+    <span id="replay-progress" class="replay-prog">0 / 0</span>
+    <button id="btn-replay-toggle" type="button">一時停止</button>
+    <span class="replay-speeds">
+      <button type="button" data-speed="1" class="active">×1</button>
+      <button type="button" data-speed="2">×2</button>
+      <button type="button" data-speed="4">×4</button>
+    </span>
+    <button id="btn-replay-stop" type="button" class="stop" data-i18n="replay_stop">停止して戻る</button>
+  </div>
+  <div id="deadend-banner" class="deadend-banner" role="status" aria-live="polite" hidden>
+    <span id="deadend-text" data-i18n="deadend_warn">この先の手が見つかりませんでした。詰んでいる可能性が高いです。</span>
+    <button id="btn-deadend-undo" type="button" class="undo-cta" data-i18n="btn_undo">一手戻す</button>
+    <button id="btn-deadend-close" type="button" class="close-x" aria-label="閉じる">✕</button>
   </div>
   <div id="msg"></div>
 </header>
@@ -160,8 +228,12 @@
     <h2 id="win-title">🎉 クリア！</h2>
     <p id="win-detail"></p>
     <p id="win-par"></p>
-    <p data-i18n="win_note">この配布にも、ちゃんと解法がありました。</p>
-    <button id="btn-win-new" data-i18n="btn_win_new">新しい配布で遊ぶ</button>
+    <p id="win-note-normal" data-i18n="win_note">この配布にも、ちゃんと解法がありました。</p>
+    <p id="win-note-replay" data-i18n="win_replay_note" hidden>模範解答の再生が完了しました。元の局面に戻ることができます。</p>
+    <div class="win-actions">
+      <button id="btn-win-return" type="button" class="secondary" data-i18n="btn_win_return" hidden>元の局面に戻る</button>
+      <button id="btn-win-new" data-i18n="btn_win_new">新しい配布で遊ぶ</button>
+    </div>
   </div>
 </div>
 
@@ -301,9 +373,786 @@ function isValidRun(cards) {
 </script>
 <script>
 "use strict";
+/* ==== SOLVER START ==== */
+function createSolverEngine() {
+  "use strict";
+  const SOLVER_LIMITS = {
+    HINT_WA_FAST: { w: 3.2, maxNodes: 15000, maxMs: 450, splitMode: 1, allowFT: false, maxRedeals: 3 },
+    HINT_WA_FULL: { w: 4.0, maxNodes: 25000, maxMs: 650, splitMode: 2, allowFT: true, maxRedeals: 4 },
+    HINT_DFS: { maxNodes: 40000, maxMs: 700, maxRedeals: 3, maxDepth: 2500 },
+    REPLAY_WA_FAST: { w: 3.2, maxNodes: 15000, maxMs: 500, splitMode: 1, allowFT: false, maxRedeals: 3 },
+    REPLAY_WA_FULL: { w: 4.0, maxNodes: 30000, maxMs: 850, splitMode: 2, allowFT: true, maxRedeals: 4 },
+    REPLAY_DFS: { maxNodes: 55000, maxMs: 1000, maxRedeals: 3, maxDepth: 2500 },
+    DEADEND_FAST: { w: 3.2, maxNodes: 6000, maxMs: 150, splitMode: 1, allowFT: false, maxRedeals: 4 },
+    DEADEND_EXHAUST: { maxNodes: 25000, maxMs: 350 },
+  };
+
+  const suitOf = (id) => (id / 13) | 0;
+  const rankOf = (id) => (id % 13) + 1;
+  const isRedS = (s) => s === 1 || s === 2;
+  const CHAR_MAP = Array.from({ length: 128 }, (_, i) => String.fromCharCode(i + 1));
+
+  function encodePile(arr) {
+    let s = "";
+    for (let i = 0; i < arr.length; i++) s += CHAR_MAP[arr[i]];
+    return s;
+  }
+
+  function gameToSolverState(gs) {
+    return {
+      tab: gs.tableau.map((p) => p.map((c) => (c.suit * 13 + (c.rank - 1)) | (c.faceUp ? 64 : 0))),
+      stock: gs.stock.map((c) => c.suit * 13 + (c.rank - 1)),
+      waste: (gs.waste || []).map((c) => c.suit * 13 + (c.rank - 1)),
+      found: (gs.foundations || [[], [], [], []]).map((f) => f.length),
+      redeals: gs.redeals || 0,
+    };
+  }
+
+  function solverToGameState(st) {
+    return {
+      tableau: st.tab.map((p) =>
+        p.map((v) => ({ suit: suitOf(v & 63), rank: rankOf(v & 63), faceUp: v >= 64 }))
+      ),
+      stock: st.stock.map((id) => ({ suit: suitOf(id), rank: rankOf(id), faceUp: false })),
+      waste: st.waste.map((id) => ({ suit: suitOf(id), rank: rankOf(id), faceUp: true })),
+      foundations: st.found.map((cnt, s) => {
+        const f = [];
+        for (let r = 1; r <= cnt; r++) f.push({ suit: s, rank: r, faceUp: true });
+        return f;
+      }),
+      redeals: st.redeals || 0,
+    };
+  }
+
+  function cloneState(st) {
+    return {
+      tab: [
+        st.tab[0].slice(), st.tab[1].slice(), st.tab[2].slice(), st.tab[3].slice(),
+        st.tab[4].slice(), st.tab[5].slice(), st.tab[6].slice(),
+      ],
+      stock: st.stock.slice(),
+      waste: st.waste.slice(),
+      found: [st.found[0], st.found[1], st.found[2], st.found[3]],
+      redeals: st.redeals || 0,
+    };
+  }
+
+  function exactStateKey(st) {
+    return (
+      CHAR_MAP[st.found[0]] + CHAR_MAP[st.found[1]] + CHAR_MAP[st.found[2]] + CHAR_MAP[st.found[3]] +
+      encodePile(st.tab[0]) + "\x00" + encodePile(st.tab[1]) + "\x00" + encodePile(st.tab[2]) + "\x00" +
+      encodePile(st.tab[3]) + "\x00" + encodePile(st.tab[4]) + "\x00" + encodePile(st.tab[5]) + "\x00" +
+      encodePile(st.tab[6]) + "\x00" + encodePile(st.stock) + "\x00" + encodePile(st.waste)
+    );
+  }
+
+  function canonHash(st, incRedeals) {
+    const cols = [
+      encodePile(st.tab[0]), encodePile(st.tab[1]), encodePile(st.tab[2]), encodePile(st.tab[3]),
+      encodePile(st.tab[4]), encodePile(st.tab[5]), encodePile(st.tab[6]),
+    ];
+    cols.sort();
+    return (
+      CHAR_MAP[st.found[0]] + CHAR_MAP[st.found[1]] + CHAR_MAP[st.found[2]] + CHAR_MAP[st.found[3]] +
+      (incRedeals ? CHAR_MAP[Math.min(127, st.redeals || 0)] : "\x01") +
+      cols.join("\x00") + "\x00" + encodePile(st.stock) + "\x00" + encodePile(st.waste)
+    );
+  }
+
+  function canTab(cardId, destPile) {
+    if (!destPile.length) return rankOf(cardId) === 13;
+    const top = destPile[destPile.length - 1];
+    return top >= 64 && isRedS(suitOf(top & 63)) !== isRedS(suitOf(cardId)) && rankOf(top & 63) === rankOf(cardId) + 1;
+  }
+
+  function isStrictSafe(st, id) {
+    const r = rankOf(id);
+    if (r <= 2) return true;
+    const s = suitOf(id);
+    const opp = isRedS(s) ? [0, 3] : [1, 2];
+    const same = isRedS(s) ? [1, 2] : [0, 3];
+    const otherSame = same[0] === s ? same[1] : same[0];
+    return st.found[opp[0]] >= r - 1 && st.found[opp[1]] >= r - 1 && st.found[otherSame] >= r - 2;
+  }
+
+  function autoStrictSafe(st, moves) {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      const wl = st.waste.length;
+      if (wl) {
+        const wt = st.waste[wl - 1];
+        if (st.found[suitOf(wt)] === rankOf(wt) - 1 && isStrictSafe(st, wt)) {
+          st.found[suitOf(wt)]++;
+          st.waste.pop();
+          if (moves) moves.push({ t: "WF" });
+          changed = true;
+          continue;
+        }
+      }
+      for (let p = 0; p < 7; p++) {
+        const pile = st.tab[p];
+        if (!pile.length) continue;
+        const top = pile[pile.length - 1];
+        if (top >= 64) {
+          const id = top & 63;
+          if (st.found[suitOf(id)] === rankOf(id) - 1 && isStrictSafe(st, id)) {
+            st.found[suitOf(id)]++;
+            pile.pop();
+            if (pile.length && pile[pile.length - 1] < 64) pile[pile.length - 1] |= 64;
+            if (moves) moves.push({ t: "TF", pile: p });
+            changed = true;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  function applyMove(st, mv) {
+    if (mv.t === "TF") {
+      const pile = st.tab[mv.pile];
+      const id = pile.pop() & 63;
+      st.found[suitOf(id)]++;
+      if (pile.length && pile[pile.length - 1] < 64) pile[pile.length - 1] |= 64;
+    } else if (mv.t === "WF") {
+      st.found[suitOf(st.waste.pop())]++;
+    } else if (mv.t === "WT") {
+      st.tab[mv.dest].push(st.waste.pop() | 64);
+    } else if (mv.t === "TT") {
+      const src = st.tab[mv.src];
+      const cards = src.splice(mv.idx);
+      const dst = st.tab[mv.dest];
+      for (let i = 0; i < cards.length; i++) dst.push(cards[i]);
+      if (src.length && src[src.length - 1] < 64) src[src.length - 1] |= 64;
+    } else if (mv.t === "FT") {
+      st.found[mv.suit]--;
+      st.tab[mv.dest].push((mv.suit * 13 + st.found[mv.suit]) | 64);
+    } else if (mv.t === "D") {
+      st.waste.push(st.stock.pop());
+    } else if (mv.t === "R") {
+      const w = st.waste;
+      const ns = new Array(w.length);
+      for (let i = 0; i < w.length; i++) ns[i] = w[w.length - 1 - i];
+      st.stock = ns;
+      st.waste = [];
+      st.redeals = (st.redeals || 0) + 1;
+    }
+  }
+
+  function isGoal(st) {
+    return st.found[0] === 13 && st.found[1] === 13 && st.found[2] === 13 && st.found[3] === 13;
+  }
+
+  function isLegalMove(st, mv) {
+    if (!mv) return false;
+    if (mv.t === "D") return st.stock.length > 0;
+    if (mv.t === "R") return st.stock.length === 0 && st.waste.length > 0;
+    if (mv.t === "WF") {
+      const wt = st.waste[st.waste.length - 1];
+      return wt !== undefined && st.found[suitOf(wt)] === rankOf(wt) - 1;
+    }
+    if (mv.t === "TF") {
+      const pile = st.tab[mv.pile];
+      const top = pile && pile[pile.length - 1];
+      return top !== undefined && top >= 64 && st.found[suitOf(top & 63)] === rankOf(top & 63) - 1;
+    }
+    if (mv.t === "WT") {
+      const wt = st.waste[st.waste.length - 1];
+      return wt !== undefined && mv.dest >= 0 && mv.dest < 7 && canTab(wt, st.tab[mv.dest]);
+    }
+    if (mv.t === "TT") {
+      if (mv.src === mv.dest || mv.src < 0 || mv.src >= 7 || mv.dest < 0 || mv.dest >= 7) return false;
+      const src = st.tab[mv.src];
+      if (!src || mv.idx < 0 || mv.idx >= src.length) return false;
+      for (let i = mv.idx; i < src.length; i++) {
+        if (src[i] < 64) return false;
+        if (i > mv.idx) {
+          const a = src[i - 1] & 63, b = src[i] & 63;
+          if (isRedS(suitOf(a)) === isRedS(suitOf(b)) || rankOf(a) !== rankOf(b) + 1) return false;
+        }
+      }
+      return canTab(src[mv.idx] & 63, st.tab[mv.dest]);
+    }
+    if (mv.t === "FT") {
+      if (mv.suit < 0 || mv.suit >= 4 || mv.dest < 0 || mv.dest >= 7) return false;
+      if (st.found[mv.suit] <= 0) return false;
+      const id = mv.suit * 13 + (st.found[mv.suit] - 1);
+      return canTab(id, st.tab[mv.dest]);
+    }
+    return false;
+  }
+
+  function replayMovesOnSolverState(initSt, moves) {
+    const st = cloneState(initSt);
+    for (let i = 0; i < moves.length; i++) {
+      if (!isLegalMove(st, moves[i])) return false;
+      applyMove(st, moves[i]);
+    }
+    return isGoal(st);
+  }
+
+  function genMoves(st, opts) {
+    const mvs = [];
+    const wl = st.waste.length;
+    const wt = wl ? st.waste[wl - 1] : -1;
+    for (let p = 0; p < 7; p++) {
+      const pile = st.tab[p];
+      if (!pile.length) continue;
+      const top = pile[pile.length - 1];
+      if (top >= 64) {
+        const id = top & 63;
+        if (st.found[suitOf(id)] === rankOf(id) - 1) mvs.push({ mv: { t: "TF", pile: p }, pen: 0 });
+      }
+    }
+    if (wt >= 0 && st.found[suitOf(wt)] === rankOf(wt) - 1) mvs.push({ mv: { t: "WF" }, pen: 0 });
+
+    let emptyCol = -1;
+    for (let d = 0; d < 7; d++) { if (!st.tab[d].length) { emptyCol = d; break; } }
+
+    for (let d = 0; d < 7; d++) {
+      const dest = st.tab[d];
+      if (!dest.length && d !== emptyCol) continue;
+      if (wt >= 0 && canTab(wt, dest)) mvs.push({ mv: { t: "WT", dest: d }, pen: 0 });
+      for (let p = 0; p < 7; p++) {
+        if (p === d) continue;
+        const pile = st.tab[p], len = pile.length;
+        if (!len) continue;
+        let firstUp = len - 1;
+        while (firstUp > 0 && pile[firstUp - 1] >= 64) {
+          const a = pile[firstUp - 1] & 63, b = pile[firstUp] & 63;
+          if (isRedS(suitOf(a)) === isRedS(suitOf(b)) || rankOf(a) !== rankOf(b) + 1) break;
+          firstUp--;
+        }
+        for (let i = firstUp; i < len; i++) {
+          if (!canTab(pile[i] & 63, dest)) continue;
+          if (!dest.length && i === 0) continue;
+          const reveals = i > 0 && pile[i - 1] < 64;
+          const empties = i === 0;
+          if (reveals || empties) {
+            mvs.push({ mv: { t: "TT", src: p, idx: i, dest: d }, pen: 0 });
+          } else if (i > 0) {
+            const belowId = pile[i - 1] & 63;
+            const canFoundBelow = st.found[suitOf(belowId)] === rankOf(belowId) - 1;
+            if (opts.splitMode === 2 || (opts.splitMode === 1 && canFoundBelow)) {
+              mvs.push({ mv: { t: "TT", src: p, idx: i, dest: d }, pen: canFoundBelow ? 0.3 : 3.0 });
+            }
+          }
+        }
+      }
+    }
+
+    if (opts.allowFT) {
+      for (let s = 0; s < 4; s++) {
+        if (st.found[s] <= 1) continue;
+        const id = s * 13 + (st.found[s] - 1);
+        for (let d = 0; d < 7; d++) {
+          if (canTab(id, st.tab[d])) mvs.push({ mv: { t: "FT", suit: s, dest: d }, pen: 4.0 });
+        }
+      }
+    }
+
+    if (st.stock.length) mvs.push({ mv: { t: "D" }, pen: 0 });
+    else if (wl && st.redeals < opts.maxRedeals) mvs.push({ mv: { t: "R" }, pen: 0.5 });
+    return mvs;
+  }
+
+  function genMovesOrderedDFS(st, maxRedeals) {
+    const revealF = [], revealT = [], foundM = [], tabM = [], retM = [], other = [];
+    const wl = st.waste.length, wt = wl ? st.waste[wl - 1] : -1;
+    for (let p = 0; p < 7; p++) {
+      const pile = st.tab[p];
+      if (!pile.length) continue;
+      const top = pile[pile.length - 1];
+      if (top >= 64) {
+        const id = top & 63;
+        if (st.found[suitOf(id)] === rankOf(id) - 1) {
+          const mv = { t: "TF", pile: p };
+          if (pile.length > 1 && pile[pile.length - 2] < 64) revealF.push(mv);
+          else foundM.push(mv);
+        }
+      }
+    }
+    if (wt >= 0 && st.found[suitOf(wt)] === rankOf(wt) - 1) foundM.push({ t: "WF" });
+
+    let emptyCol = -1;
+    for (let d = 0; d < 7; d++) { if (!st.tab[d].length) { emptyCol = d; break; } }
+
+    for (let d = 0; d < 7; d++) {
+      const dest = st.tab[d];
+      if (!dest.length && d !== emptyCol) continue;
+      if (wt >= 0 && canTab(wt, dest)) tabM.push({ t: "WT", dest: d });
+      for (let p = 0; p < 7; p++) {
+        if (p === d) continue;
+        const pile = st.tab[p], len = pile.length;
+        if (!len) continue;
+        for (let i = len - 1; i >= 0; i--) {
+          if (pile[i] < 64) break;
+          if (i < len - 1) {
+            const a = pile[i] & 63, b = pile[i + 1] & 63;
+            if (isRedS(suitOf(a)) === isRedS(suitOf(b)) || rankOf(a) !== rankOf(b) + 1) break;
+          }
+          if (!canTab(pile[i] & 63, dest)) continue;
+          if (!dest.length && i === 0) continue;
+          const mv = { t: "TT", src: p, idx: i, dest: d };
+          if (i > 0 && pile[i - 1] < 64) revealT.push(mv);
+          else tabM.push(mv);
+        }
+      }
+    }
+    for (let s = 0; s < 4; s++) {
+      if (st.found[s] <= 1) continue;
+      const id = s * 13 + (st.found[s] - 1);
+      for (let d = 0; d < 7; d++) if (canTab(id, st.tab[d])) retM.push({ t: "FT", suit: s, dest: d });
+    }
+    if (st.stock.length) other.push({ t: "D" });
+    else if (wl && st.redeals < maxRedeals) other.push({ t: "R" });
+    return revealF.concat(revealT, foundM, tabM, retM, other);
+  }
+
+  function heuristic(st, includeRedeals) {
+    const remFound = 52 - (st.found[0] + st.found[1] + st.found[2] + st.found[3]);
+    let faceDown = 0, emptyCols = 0;
+    for (let p = 0; p < 7; p++) {
+      const pile = st.tab[p];
+      if (!pile.length) { emptyCols++; continue; }
+      for (let i = 0; i < pile.length; i++) {
+        if (pile[i] < 64) faceDown++;
+        else break;
+      }
+    }
+    const sw = st.stock.length + st.waste.length;
+    return remFound * 1.2 + faceDown * 2.0 + sw * 0.25 - emptyCols * 0.4 + (includeRedeals ? (st.redeals || 0) * 1.5 : 0);
+  }
+
+  class MinHeap {
+    constructor() { this.a = []; }
+    push(x) {
+      const a = this.a; a.push(x); let i = a.length - 1;
+      while (i > 0) {
+        const p = (i - 1) >> 1;
+        if (a[p].f <= a[i].f) break;
+        const t = a[p]; a[p] = a[i]; a[i] = t; i = p;
+      }
+    }
+    pop() {
+      const a = this.a, top = a[0], last = a.pop();
+      if (a.length) {
+        a[0] = last; let i = 0; const n = a.length;
+        while (true) {
+          const l = 2 * i + 1, r = l + 1; let m = i;
+          if (l < n && a[l].f < a[m].f) m = l;
+          if (r < n && a[r].f < a[m].f) m = r;
+          if (m === i) break;
+          const t = a[i]; a[i] = a[m]; a[m] = t; i = m;
+        }
+      }
+      return top;
+    }
+    get size() { return this.a.length; }
+  }
+
+  function reconstructMoves(node) {
+    const chunks = []; let cur = node;
+    while (cur) { if (cur.mvs.length) chunks.push(cur.mvs); cur = cur.parent; }
+    chunks.reverse();
+    const out = [];
+    for (let i = 0; i < chunks.length; i++) for (let j = 0; j < chunks[i].length; j++) out.push(chunks[i][j]);
+    return out;
+  }
+
+  function solveWA(initSt, opts) {
+    const rootSt = cloneState(initSt);
+    rootSt.redeals = 0;
+    const rootMvs = [];
+    autoStrictSafe(rootSt, rootMvs);
+    if (isGoal(rootSt)) return { status: "solved", moves: rootMvs, expanded: 0 };
+    const g0 = rootMvs.length;
+    const pq = new MinHeap();
+    pq.push({ st: rootSt, g: g0, psum: 0, f: g0 + opts.w * heuristic(rootSt, true), parent: null, mvs: rootMvs });
+    const bestG = new Map();
+    bestG.set(canonHash(rootSt, true), g0);
+    let expanded = 0;
+    const t0 = Date.now();
+    while (pq.size > 0 && expanded < opts.maxNodes) {
+      if ((expanded & 255) === 0 && Date.now() - t0 >= opts.maxMs) return { status: "timeout", expanded };
+      const cur = pq.pop();
+      if (isGoal(cur.st)) return { status: "solved", moves: reconstructMoves(cur), expanded };
+      expanded++;
+      const mvs = genMoves(cur.st, opts);
+      for (let k = 0; k < mvs.length; k++) {
+        const { mv, pen } = mvs[k];
+        const ns = cloneState(cur.st);
+        applyMove(ns, mv);
+        const extra = [mv];
+        autoStrictSafe(ns, extra);
+        const ng = cur.g + extra.length;
+        const hkey = canonHash(ns, true);
+        const prev = bestG.get(hkey);
+        if (prev !== undefined && prev <= ng) continue;
+        bestG.set(hkey, ng);
+        const npsum = cur.psum + pen;
+        pq.push({ st: ns, g: ng, psum: npsum, f: ng + opts.w * heuristic(ns, true) + npsum, parent: cur, mvs: extra });
+      }
+    }
+    return { status: "timeout", expanded };
+  }
+
+  function solveDFSLazy(initSt, opts) {
+    const rootSt = cloneState(initSt);
+    rootSt.redeals = 0;
+    const rootMvs = [];
+    autoStrictSafe(rootSt, rootMvs);
+    if (isGoal(rootSt)) return { status: "solved", moves: rootMvs, expanded: 0 };
+    const visited = new Set([canonHash(rootSt, true)]);
+    const t0 = Date.now();
+    let expanded = 0;
+    const maxDepth = opts.maxDepth || 2500;
+    const stack = [{
+      st: rootSt,
+      mvs: genMovesOrderedDFS(rootSt, opts.maxRedeals),
+      idx: 0,
+      stepMvs: rootMvs,
+      depth: rootMvs.length,
+    }];
+    while (stack.length > 0 && expanded < opts.maxNodes) {
+      if ((expanded & 255) === 0 && Date.now() - t0 >= opts.maxMs) return { status: "timeout", expanded };
+      const top = stack[stack.length - 1];
+      if (top.idx >= top.mvs.length) { stack.pop(); continue; }
+      const mv = top.mvs[top.idx++];
+      const ns = cloneState(top.st);
+      applyMove(ns, mv);
+      const extra = [mv];
+      autoStrictSafe(ns, extra);
+      if (isGoal(ns)) {
+        const out = [];
+        for (let i = 0; i < stack.length; i++) {
+          const sm = stack[i].stepMvs;
+          for (let j = 0; j < sm.length; j++) out.push(sm[j]);
+        }
+        for (let j = 0; j < extra.length; j++) out.push(extra[j]);
+        return { status: "solved", moves: out, expanded };
+      }
+      const ndepth = top.depth + extra.length;
+      if (ndepth > maxDepth) continue;
+      const h = canonHash(ns, true);
+      if (visited.has(h)) continue;
+      visited.add(h);
+      expanded++;
+      stack.push({
+        st: ns,
+        mvs: genMovesOrderedDFS(ns, opts.maxRedeals),
+        idx: 0,
+        stepMvs: extra,
+        depth: ndepth,
+      });
+    }
+    return { status: "timeout", expanded };
+  }
+
+  function findColPerm(fromSt, toSt) {
+    const fromKeys = fromSt.tab.map(encodePile), toKeys = toSt.tab.map(encodePile);
+    const used = [false, false, false, false, false, false, false], perm = new Array(7);
+    for (let p = 0; p < 7; p++) {
+      let found = -1;
+      for (let q = 0; q < 7; q++) if (!used[q] && fromKeys[q] === toKeys[p]) { found = q; used[q] = true; break; }
+      if (found < 0) return null;
+      perm[p] = found;
+    }
+    return perm;
+  }
+
+  function remapMoves(moves, perm) {
+    return moves.map((mv) => {
+      if (mv.t === "TF") return { t: "TF", pile: perm[mv.pile] };
+      if (mv.t === "WT") return { t: "WT", dest: perm[mv.dest] };
+      if (mv.t === "FT") return { t: "FT", suit: mv.suit, dest: perm[mv.dest] };
+      if (mv.t === "TT") return { t: "TT", src: perm[mv.src], idx: mv.idx, dest: perm[mv.dest] };
+      return mv;
+    });
+  }
+
+  function canonClean(initSt, moves) {
+    let cur = moves.slice();
+    for (let iter = 0; iter < 80; iter++) {
+      const st = cloneState(initSt);
+      st.redeals = 0;
+      const states = [cloneState(st)];
+      const seen = new Map();
+      let cut = null;
+      for (let i = 0; i <= cur.length; i++) {
+        const h = canonHash(st, false);
+        const list = seen.get(h);
+        if (list) {
+          for (let k = 0; k < list.length; k++) {
+            const prevIdx = list[k];
+            if (states[prevIdx].redeals <= st.redeals) {
+              const perm = findColPerm(states[prevIdx], st);
+              if (perm) { cut = [prevIdx, i, perm]; break; }
+            }
+          }
+          if (cut) break;
+          list.push(i);
+        } else seen.set(h, [i]);
+        if (i < cur.length) { applyMove(st, cur[i]); states.push(cloneState(st)); }
+      }
+      if (!cut) break;
+      cur = cur.slice(0, cut[0]).concat(remapMoves(cur.slice(cut[1]), cut[2]));
+    }
+    return cur;
+  }
+
+  function solveWithLimits(initSt, waFast, waFull, dfsCfg) {
+    const t0 = Date.now();
+    if (isGoal(initSt)) return { status: "solved", moves: [], stage: "goal", expanded: 0, ms: 0 };
+    const r1 = solveWA(initSt, waFast);
+    if (r1.status === "solved") return { status: "solved", moves: r1.moves, stage: "waFast", expanded: r1.expanded, ms: Date.now() - t0 };
+    const r2 = solveWA(initSt, waFull);
+    if (r2.status === "solved") return { status: "solved", moves: r2.moves, stage: "waFull", expanded: r1.expanded + r2.expanded, ms: Date.now() - t0 };
+    const r3 = solveDFSLazy(initSt, dfsCfg);
+    if (r3.status === "solved") {
+      const cleaned = canonClean(initSt, r3.moves);
+      return { status: "solved", moves: cleaned, stage: "dfs", expanded: r1.expanded + r2.expanded + r3.expanded, ms: Date.now() - t0 };
+    }
+    return { status: "timeout", stage: "none", expanded: r1.expanded + r2.expanded + r3.expanded, ms: Date.now() - t0 };
+  }
+
+  function solveForHint(initSt) {
+    return solveWithLimits(initSt, SOLVER_LIMITS.HINT_WA_FAST, SOLVER_LIMITS.HINT_WA_FULL, SOLVER_LIMITS.HINT_DFS);
+  }
+
+  function solveForReplay(initSt) {
+    return solveWithLimits(initSt, SOLVER_LIMITS.REPLAY_WA_FAST, SOLVER_LIMITS.REPLAY_WA_FULL, SOLVER_LIMITS.REPLAY_DFS);
+  }
+
+  function checkDeadEnd(initSt) {
+    const rootSt = cloneState(initSt);
+    rootSt.redeals = 0;
+    autoStrictSafe(rootSt, null);
+    if (isGoal(rootSt)) return { status: "solvable", stage: "safe", expanded: 0 };
+
+    // 1段目: 高速可解判定（ここでは解けなくても exhausted にしない）
+    const r1 = solveWA(rootSt, SOLVER_LIMITS.DEADEND_FAST);
+    if (r1.status === "solved") return { status: "solvable", stage: "fast", expanded: r1.expanded };
+
+    // 2段目: 完全探索（全分割・組札戻し・無制限リサイクル、深さ制限なし）で枯渇時のみ exhausted
+    const t0 = Date.now();
+    const { maxNodes, maxMs } = SOLVER_LIMITS.DEADEND_EXHAUST;
+    const pq = new MinHeap();
+    const visited = new Set([canonHash(rootSt, false)]);
+    pq.push({ st: rootSt, depth: 0, f: heuristic(rootSt, false) });
+    let expanded = 0;
+    let timedOut = false;
+
+    while (pq.size > 0) {
+      if (expanded >= maxNodes || ((expanded & 127) === 0 && Date.now() - t0 >= maxMs)) {
+        timedOut = true;
+        break;
+      }
+      const cur = pq.pop();
+      if (isGoal(cur.st)) return { status: "solvable", stage: "complete", expanded };
+      expanded++;
+      const mvs = genMoves(cur.st, { splitMode: 2, allowFT: true, maxRedeals: Infinity });
+      for (let k = 0; k < mvs.length; k++) {
+        const { mv, pen } = mvs[k];
+        const ns = cloneState(cur.st);
+        applyMove(ns, mv);
+        autoStrictSafe(ns, null);
+        if (isGoal(ns)) return { status: "solvable", stage: "complete", expanded };
+        const hk = canonHash(ns, false);
+        if (visited.has(hk)) continue;
+        visited.add(hk);
+        const nd = cur.depth + 1;
+        pq.push({ st: ns, depth: nd, f: heuristic(ns, false) + nd * 0.15 + pen * 0.5 });
+      }
+    }
+    if (timedOut || pq.size > 0) return { status: "timeout", expanded };
+    return { status: "exhausted", expanded };
+  }
+
+  return {
+    SOLVER_LIMITS,
+    gameToSolverState,
+    solverToGameState,
+    exactStateKey,
+    canonHash,
+    cloneState,
+    applyMove,
+    isGoal,
+    isLegalMove,
+    replayMovesOnSolverState,
+    solveForHint,
+    solveForReplay,
+    checkDeadEnd,
+  };
+}
+/* ==== SOLVER END ==== */
+</script>
+<script>
+"use strict";
 const $ = (id) => document.getElementById(id);
 const boardEl = $("board"), topRowEl = $("toprow"), tableauEl = $("tableau"), dragLayer = $("draglayer");
-let S = null, sel = null, hintState = null, initialSnap = null;
+const SOLVER = createSolverEngine();
+let S = null, sel = null, hintState = null, hintTimer = null, initialSnap = null;
+let gameGen = 0, hintGen = 0, deadEndGen = 0;
+let hintPlanMap = null, initialPlanMap = null, replaySolution = null;
+let hintInFlightGen = -1, hintInFlightKey = "";
+let replayBackup = null, inReplayStep = false;
+let replay = { active: false, playing: false, idx: 0, speed: 1, timer: null, moves: [] };
+let deadEndProven = false, deadEndDismissed = false;
+
+/* ==== WebAudio 効果音（最小3種・合成・localStorage保存） ==== */
+const SFX_STORAGE_MUTED = "gss-sfx-muted";
+const SFX_STORAGE_VOL = "gss-sfx-volume";
+const SFX = (function () {
+  let ctx = null;
+  let muted = false;
+  let volume = 0.25; // 控えめな既定音量
+  try {
+    const m = localStorage.getItem(SFX_STORAGE_MUTED);
+    if (m === "1" || m === "true") muted = true;
+    else if (m === "0" || m === "false") muted = false;
+    const v = parseFloat(localStorage.getItem(SFX_STORAGE_VOL));
+    if (!Number.isNaN(v) && v >= 0 && v <= 1) volume = v;
+  } catch (e) {}
+
+  const stats = { synthCalls: 0, place: 0, flip: 0, win: 0 };
+
+  function save() {
+    try {
+      localStorage.setItem(SFX_STORAGE_MUTED, muted ? "1" : "0");
+      localStorage.setItem(SFX_STORAGE_VOL, String(Math.round(volume * 100) / 100));
+    } catch (e) {}
+  }
+
+  function ensureCtx() {
+    if (ctx) {
+      if (ctx.state === "suspended" && typeof ctx.resume === "function") {
+        try { ctx.resume(); } catch (e) {}
+      }
+      return ctx;
+    }
+    const AC = typeof window !== "undefined" && (window.AudioContext || window.webkitAudioContext);
+    if (!AC) return null;
+    try {
+      ctx = new AC();
+      if (ctx.state === "suspended" && typeof ctx.resume === "function") ctx.resume();
+    } catch (e) {
+      ctx = null;
+    }
+    return ctx;
+  }
+
+  function playTone(c, freqStart, freqEnd, dur, type, gainPeak, delay) {
+    const t0 = c.currentTime + (delay || 0);
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freqStart, t0);
+    if (freqEnd !== freqStart) osc.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(gainPeak, t0 + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g);
+    g.connect(c.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.01);
+  }
+
+  function playNoise(c, dur, filterType, freq, gainPeak) {
+    const len = Math.max(1, Math.floor(c.sampleRate * dur));
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    const flt = c.createBiquadFilter();
+    flt.type = filterType;
+    flt.frequency.setValueAtTime(freq, c.currentTime);
+    const g = c.createGain();
+    g.gain.setValueAtTime(gainPeak, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+    src.connect(flt);
+    flt.connect(g);
+    g.connect(c.destination);
+    src.start(c.currentTime);
+  }
+
+  function synthesize(kind, vol) {
+    stats.synthCalls++;
+    if (stats[kind] !== undefined) stats[kind]++;
+    const c = ensureCtx();
+    if (!c) return false;
+    try {
+      if (kind === "place") {
+        playTone(c, 165, 85, 0.048, "triangle", vol * 0.28, 0);
+        playNoise(c, 0.028, "lowpass", 950, vol * 0.16);
+      } else if (kind === "flip") {
+        playNoise(c, 0.042, "highpass", 1900, vol * 0.18);
+        playTone(c, 520, 320, 0.025, "sine", vol * 0.08, 0);
+      } else if (kind === "win") {
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        for (let i = 0; i < notes.length; i++) {
+          playTone(c, notes[i], notes[i], 0.22, "sine", vol * 0.22, i * 0.085);
+        }
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function play(kind) {
+    if (muted || volume <= 0) return false;
+    return synthesize(kind, volume);
+  }
+
+  function setMuted(m) {
+    muted = !!m;
+    save();
+    updateSfxUI();
+  }
+
+  function setVolume(v) {
+    const nv = Math.max(0, Math.min(1, Number(v)));
+    volume = Number.isNaN(nv) ? volume : nv;
+    if (volume > 0 && muted) muted = false;
+    save();
+    updateSfxUI();
+  }
+
+  function unlock() {
+    if (!muted && volume > 0) ensureCtx();
+  }
+
+  return {
+    play,
+    synthesize,
+    unlock,
+    setMuted,
+    setVolume,
+    isMuted: () => muted,
+    getVolume: () => volume,
+    stats,
+  };
+})();
+if (typeof window !== "undefined") window.__GSS_SFX = SFX;
+
+function updateSfxUI() {
+  const btn = $("btn-mute");
+  const slider = $("vol-slider");
+  if (!btn || !slider) return;
+  const muted = SFX.isMuted();
+  const vol = SFX.getVolume();
+  const silent = muted || vol <= 0;
+  btn.textContent = silent ? "🔇" : "🔊";
+  btn.setAttribute("aria-pressed", muted ? "true" : "false");
+  const label = muted ? t("sfx_unmute_aria") : t("sfx_mute_aria");
+  btn.setAttribute("aria-label", label);
+  btn.title = label;
+  slider.value = String(Math.round(vol * 100));
+  slider.setAttribute("aria-label", t("sfx_vol_aria"));
+}
 
 /* ==== i18n ==== */
 const LANGS = ["ja", "en", "zh-CN", "es", "ru", "pt-BR", "hi"];
@@ -348,6 +1197,25 @@ const I18N = {
     msg_undone: "一手戻しました。",
     confirm_discard_new: "今のゲームを破棄して、新しい配布にしますか？",
     confirm_discard_diff: "今のゲームを破棄して、難易度「{diff}」で新しい配布にしますか？",
+    btn_replay: "模範解答",
+    replay_label: "模範解答リプレイ",
+    replay_play: "再生",
+    replay_pause: "一時停止",
+    replay_stop: "停止して戻る",
+    replay_playing: "模範解答を再生中（{step}/{total} 手）",
+    replay_paused: "模範解答を一時停止中（{step}/{total} 手）",
+    replay_restored: "リプレイを停止し、元の局面に戻りました。",
+    btn_win_return: "元の局面に戻る",
+    win_replay_note: "模範解答の再生が完了しました。元の局面に戻ることができます。",
+    hint_searching: "完璧なヒントを探索中…",
+    hint_not_found: "ヒントが見つかりませんでした。",
+    hint_found_to_tableau: "組札の {card} を場札へ戻します。",
+    hint_recycle_stock: "捨て札を山札へ戻しましょう。",
+    deadend_warn: "この先の手が見つかりませんでした。詰んでいる可能性が高いです。",
+    deadend_close_aria: "閉じる",
+    sfx_mute_aria: "消音にする",
+    sfx_unmute_aria: "音を出す",
+    sfx_vol_aria: "効果音の音量",
   },
   en: {
     doc_title: "Guaranteed Solvable Solitaire",
@@ -389,6 +1257,25 @@ const I18N = {
     msg_undone: "Undid one move.",
     confirm_discard_new: "Discard the current game and start a new deal?",
     confirm_discard_diff: "Discard the current game and start a new deal on “{diff}”?",
+    btn_replay: "Replay",
+    replay_label: "Solution Replay",
+    replay_play: "Play",
+    replay_pause: "Pause",
+    replay_stop: "Stop & Restore",
+    replay_playing: "Replaying solution ({step}/{total})",
+    replay_paused: "Replay paused ({step}/{total})",
+    replay_restored: "Replay stopped and your previous board was restored.",
+    btn_win_return: "Return to Board",
+    win_replay_note: "Solution replay finished. You can return to your board.",
+    hint_searching: "Searching for a winning move…",
+    hint_not_found: "No hint could be found.",
+    hint_found_to_tableau: "Move {card} from the foundation back to the tableau.",
+    hint_recycle_stock: "Turn the waste pile back into the stock.",
+    deadend_warn: "No further moves were found; this board appears to be a dead end.",
+    deadend_close_aria: "Close",
+    sfx_mute_aria: "Mute sound",
+    sfx_unmute_aria: "Unmute sound",
+    sfx_vol_aria: "Sound volume",
   },
   "zh-CN": {
     doc_title: "保证有解的接龙纸牌",
@@ -430,6 +1317,25 @@ const I18N = {
     msg_undone: "已撤销一步。",
     confirm_discard_new: "放弃当前游戏，开始新的一局吗？",
     confirm_discard_diff: "放弃当前游戏，以难度“{diff}”开始新的一局吗？",
+    btn_replay: "示范重放",
+    replay_label: "示范解法重放",
+    replay_play: "播放",
+    replay_pause: "暂停",
+    replay_stop: "停止并返回",
+    replay_playing: "正在重放示范解法（{step}/{total} 步）",
+    replay_paused: "示范重放已暂停（{step}/{total} 步）",
+    replay_restored: "已停止重放并恢复原牌局。",
+    btn_win_return: "返回原牌局",
+    win_replay_note: "示范解法重放完成。您可以返回原来的牌局。",
+    hint_searching: "正在搜索必胜提示…",
+    hint_not_found: "未找到提示。",
+    hint_found_to_tableau: "把基础牌叠的 {card} 移回桌面牌列。",
+    hint_recycle_stock: "把废牌堆翻回牌堆。",
+    deadend_warn: "没有找到后续着法，当前局面很可能已成死局。",
+    deadend_close_aria: "关闭",
+    sfx_mute_aria: "静音",
+    sfx_unmute_aria: "取消静音",
+    sfx_vol_aria: "音效音量",
   },
   es: {
     doc_title: "Solitario siempre resoluble",
@@ -471,6 +1377,25 @@ const I18N = {
     msg_undone: "Se ha deshecho un movimiento.",
     confirm_discard_new: "¿Descartar la partida actual y empezar un nuevo reparto?",
     confirm_discard_diff: "¿Descartar la partida actual y empezar un nuevo reparto en «{diff}»?",
+    btn_replay: "Repetición",
+    replay_label: "Repetición de solución",
+    replay_play: "Reproducir",
+    replay_pause: "Pausar",
+    replay_stop: "Detener y volver",
+    replay_playing: "Reproduciendo solución ({step}/{total})",
+    replay_paused: "Repetición en pausa ({step}/{total})",
+    replay_restored: "Repetición detenida; se restauró tu partida.",
+    btn_win_return: "Volver a mi partida",
+    win_replay_note: "La repetición terminó. Puedes volver a tu partida.",
+    hint_searching: "Buscando jugada ganadora…",
+    hint_not_found: "No se encontró ninguna pista.",
+    hint_found_to_tableau: "Devuelve {card} de la fundación al tablero.",
+    hint_recycle_stock: "Da la vuelta al descarte para rehacer el mazo.",
+    deadend_warn: "No se encontraron jugadas futuras; parece un punto muerto.",
+    deadend_close_aria: "Cerrar",
+    sfx_mute_aria: "Silenciar sonido",
+    sfx_unmute_aria: "Activar sonido",
+    sfx_vol_aria: "Volumen de sonido",
   },
   ru: {
     doc_title: "Пасьянс с гарантированным решением",
@@ -512,6 +1437,25 @@ const I18N = {
     msg_undone: "Один ход отменён.",
     confirm_discard_new: "Сбросить текущую игру и начать новую раздачу?",
     confirm_discard_diff: "Сбросить текущую игру и начать новую раздачу на уровне «{diff}»?",
+    btn_replay: "Повтор",
+    replay_label: "Повтор решения",
+    replay_play: "Пуск",
+    replay_pause: "Пауза",
+    replay_stop: "Стоп и назад",
+    replay_playing: "Повтор решения ({step}/{total})",
+    replay_paused: "Повтор на паузе ({step}/{total})",
+    replay_restored: "Повтор остановлен, исходная позиция восстановлена.",
+    btn_win_return: "Вернуться к игре",
+    win_replay_note: "Повтор решения завершён. Вы можете вернуться к своей игре.",
+    hint_searching: "Поиск точной подсказки…",
+    hint_not_found: "Подсказка не найдена.",
+    hint_found_to_tableau: "Верните {card} из дома на игровое поле.",
+    hint_recycle_stock: "Переверните отбой обратно в колоду.",
+    deadend_warn: "Дальнейших ходов не найдено; похоже на тупик.",
+    deadend_close_aria: "Закрыть",
+    sfx_mute_aria: "Выключить звук",
+    sfx_unmute_aria: "Включить звук",
+    sfx_vol_aria: "Громкость звука",
   },
   "pt-BR": {
     doc_title: "Paciência sempre solucionável",
@@ -553,6 +1497,25 @@ const I18N = {
     msg_undone: "Uma jogada foi desfeita.",
     confirm_discard_new: "Descartar o jogo atual e começar uma nova distribuição?",
     confirm_discard_diff: "Descartar o jogo atual e começar uma nova distribuição em “{diff}”?",
+    btn_replay: "Reproduzir",
+    replay_label: "Replay da solução",
+    replay_play: "Reproduzir",
+    replay_pause: "Pausar",
+    replay_stop: "Parar e voltar",
+    replay_playing: "Reproduzindo solução ({step}/{total})",
+    replay_paused: "Replay pausado ({step}/{total})",
+    replay_restored: "Replay parado; sua posição anterior foi restaurada.",
+    btn_win_return: "Voltar ao jogo",
+    win_replay_note: "O replay da solução terminou. Você pode voltar ao seu jogo.",
+    hint_searching: "Buscando jogada vencedora…",
+    hint_not_found: "Nenhuma dica foi encontrada.",
+    hint_found_to_tableau: "Mova {card} da fundação de volta ao tabuleiro.",
+    hint_recycle_stock: "Vire o descarte de volta para o monte.",
+    deadend_warn: "Não há mais jogadas possíveis; o jogo parece sem saída.",
+    deadend_close_aria: "Fechar",
+    sfx_mute_aria: "Silenciar som",
+    sfx_unmute_aria: "Ativar som",
+    sfx_vol_aria: "Volume do som",
   },
   hi: {
     doc_title: "हमेशा हल होने वाला सॉलिटेयर",
@@ -594,6 +1557,25 @@ const I18N = {
     msg_undone: "एक चाल वापस ली गई।",
     confirm_discard_new: "मौजूदा खेल छोड़कर नया बँटवारा शुरू करें?",
     confirm_discard_diff: "मौजूदा खेल छोड़कर “{diff}” कठिनाई पर नया बँटवारा शुरू करें?",
+    btn_replay: "समाधान रीप्ले",
+    replay_label: "समाधान रीप्ले",
+    replay_play: "चलाएँ",
+    replay_pause: "रोकें",
+    replay_stop: "रोकें और लौटें",
+    replay_playing: "समाधान रीप्ले चल रहा है ({step}/{total})",
+    replay_paused: "रीप्ले रुका हुआ है ({step}/{total})",
+    replay_restored: "रीप्ले रोका गया और पिछली स्थिति बहाल हुई।",
+    btn_win_return: "अपनी स्थिति पर लौटें",
+    win_replay_note: "समाधान रीप्ले पूरा हुआ। आप अपनी स्थिति पर लौट सकते हैं।",
+    hint_searching: "सटीक संकेत खोजा जा रहा है…",
+    hint_not_found: "कोई संकेत नहीं मिला।",
+    hint_found_to_tableau: "फाउंडेशन से {card} को मैदान में वापस रखें।",
+    hint_recycle_stock: "रद्दी पत्तों को वापस गड्डी में पलटें।",
+    deadend_warn: "आगे कोई चाल नहीं बची है; यह स्थिति बंद गली प्रतीत होती है।",
+    deadend_close_aria: "बंद करें",
+    sfx_mute_aria: "ध्वनि बंद करें",
+    sfx_unmute_aria: "ध्वनि चालू करें",
+    sfx_vol_aria: "ध्वनि स्तर",
   },
 };
 function detectLang() {
@@ -630,23 +1612,197 @@ function applyLang(lang) {
   const selEl = $("lang-select");
   selEl.value = LANG;
   selEl.setAttribute("aria-label", t("lang_label"));
+  const closeBtn = $("btn-deadend-close");
+  if (closeBtn) closeBtn.setAttribute("aria-label", t("deadend_close_aria"));
+  updateSfxUI();
+  updateReplayUI();
   if (S) {
-    hintState = null;
+    clearHint();
     render();
     if (S.won) { $("win-detail").textContent = t("win_detail", { seed: S.seed, moves: S.moves, time: fmtTime(S.elapsed) }); $("win-par").textContent = winParText(); }
+    else if (replay.active) setMsg(t(replay.playing ? "replay_playing" : "replay_paused", { step: replay.idx, total: replay.moves.length }));
     else setMsg(S.diff === "easy" ? t("msg_deal_easy", { seed: S.seed }) : t("msg_deal_verified", { seed: S.seed, diff: diffLabel(S.diff) }));
   }
 }
 
-const snapshot = () => JSON.stringify({ t: S.tableau, s: S.stock, w: S.waste, f: S.foundations, m: S.moves });
+/* ==== Web Worker（Blob URL インライン生成） ==== */
+function workerEntry(ENGINE) {
+  self.onmessage = function (ev) {
+    const msg = ev.data || {};
+    try {
+      if (msg.type === "solveReplay") {
+        const res = ENGINE.solveForReplay(msg.state);
+        self.postMessage({ type: "solveReplayResult", gen: msg.gen, res });
+      } else if (msg.type === "solveHint") {
+        const res = ENGINE.solveForHint(msg.state);
+        self.postMessage({ type: "solveHintResult", gen: msg.gen, res });
+      } else if (msg.type === "checkDeadEnd") {
+        const res = ENGINE.checkDeadEnd(msg.state);
+        self.postMessage({ type: "checkDeadEndResult", gen: msg.gen, res });
+      }
+    } catch (err) {
+      self.postMessage({ type: msg.type + "Result", gen: msg.gen, res: { status: "error", error: String(err) } });
+    }
+  };
+}
+function buildSolverWorkerSource() {
+  return (
+    '"use strict";\n' +
+    createSolverEngine.toString() + "\n" +
+    "const ENGINE = createSolverEngine();\n" +
+    workerEntry.toString() + "\n" +
+    "workerEntry(ENGINE);\n"
+  );
+}
+let workerBlobUrl = null;
+let mainWorker = null, mainWorkerBusy = false, queuedMainJobs = [];
+let deadEndWorker = null, deadEndBusy = false, pendingDeadEndJob = null;
+
+function canUseWorkers() {
+  return typeof Worker === "function" && typeof Blob === "function" &&
+    typeof URL !== "undefined" && typeof URL.createObjectURL === "function";
+}
+function getWorkerUrl() {
+  if (workerBlobUrl) return workerBlobUrl;
+  if (!canUseWorkers()) return null;
+  try {
+    const blob = new Blob([buildSolverWorkerSource()], { type: "application/javascript" });
+    workerBlobUrl = URL.createObjectURL(blob);
+    return workerBlobUrl;
+  } catch (e) {
+    return null;
+  }
+}
+function resetMainWorker() {
+  if (mainWorker) { try { mainWorker.terminate(); } catch (e) {} mainWorker = null; }
+  mainWorkerBusy = false;
+  queuedMainJobs = [];
+}
+function ensureMainWorker() {
+  if (mainWorker) return mainWorker;
+  const url = getWorkerUrl();
+  if (!url) return null;
+  try {
+    const w = new Worker(url);
+    w.onmessage = (ev) => {
+      mainWorkerBusy = false;
+      const d = ev.data || {};
+      if (d.type === "solveReplayResult") handleReplaySolved(d.gen, d.res);
+      else if (d.type === "solveHintResult") handleHintSolved(d.gen, d.res);
+      pumpMainWorker();
+    };
+    w.onerror = (ev) => {
+      if (ev && typeof ev.preventDefault === "function") ev.preventDefault();
+      mainWorkerBusy = false;
+      queuedMainJobs = [];
+      try { w.terminate(); } catch (e) {}
+      if (mainWorker === w) mainWorker = null;
+    };
+    mainWorker = w;
+    return w;
+  } catch (e) {
+    return null;
+  }
+}
+function postMainJob(job) {
+  const w = ensureMainWorker();
+  if (!w) return false;
+  // ヒント要求は最新1件だけ残し、古い未着手ヒントは破棄する
+  if (job.type === "solveHint") queuedMainJobs = queuedMainJobs.filter((j) => j.type !== "solveHint");
+  queuedMainJobs.push(job);
+  pumpMainWorker();
+  return true;
+}
+function pumpMainWorker() {
+  if (mainWorkerBusy || !queuedMainJobs.length) return;
+  const w = ensureMainWorker();
+  if (!w) return;
+  const job = queuedMainJobs.shift();
+  mainWorkerBusy = true;
+  try { w.postMessage(job); }
+  catch (e) { mainWorkerBusy = false; }
+}
+
+function ensureDeadEndWorker() {
+  if (deadEndWorker) return deadEndWorker;
+  const url = getWorkerUrl();
+  if (!url) return null;
+  try {
+    const w = new Worker(url);
+    w.onmessage = (ev) => {
+      deadEndBusy = false;
+      const d = ev.data || {};
+      if (d.type === "checkDeadEndResult") handleDeadEndResult(d.gen, d.res);
+      pumpDeadEndWorker();
+    };
+    w.onerror = (ev) => {
+      if (ev && typeof ev.preventDefault === "function") ev.preventDefault();
+      deadEndBusy = false;
+      pendingDeadEndJob = null;
+      try { w.terminate(); } catch (e) {}
+      if (deadEndWorker === w) deadEndWorker = null;
+    };
+    deadEndWorker = w;
+    return w;
+  } catch (e) {
+    return null;
+  }
+}
+function postDeadEndJob(job) {
+  const w = ensureDeadEndWorker();
+  if (!w) return false;
+  pendingDeadEndJob = job;
+  pumpDeadEndWorker();
+  return true;
+}
+function pumpDeadEndWorker() {
+  if (deadEndBusy || !pendingDeadEndJob) return;
+  const w = ensureDeadEndWorker();
+  if (!w) return;
+  const job = pendingDeadEndJob;
+  pendingDeadEndJob = null;
+  deadEndBusy = true;
+  try { w.postMessage(job); }
+  catch (e) { deadEndBusy = false; }
+}
+
+const snapshot = () => JSON.stringify({ t: S.tableau, s: S.stock, w: S.waste, f: S.foundations, m: S.moves, r: S.redeals || 0 });
 function restore(snap) {
   const d = JSON.parse(snap);
-  S.tableau = d.t; S.stock = d.s; S.waste = d.w; S.foundations = d.f; S.moves = d.m;
-  sel = null; hintState = null;
+  S.tableau = d.t; S.stock = d.s; S.waste = d.w; S.foundations = d.f; S.moves = d.m; S.redeals = d.r || 0;
+  sel = null; clearHint();
 }
 function pushHistory() { S.history.push(snapshot()); if (S.history.length > 400) S.history.shift(); }
 function markStarted() { if (!S.started) { S.started = true; S.startTime = Date.now(); } }
 const fmtTime = (ms) => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+
+function clearHint() {
+  if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
+  hintState = null;
+}
+function hideDeadEndBanner() {
+  deadEndProven = false;
+  deadEndDismissed = false;
+  const b = $("deadend-banner");
+  if (b) b.hidden = true;
+}
+function showDeadEndBanner() {
+  deadEndProven = true;
+  const b = $("deadend-banner");
+  if (!b || deadEndDismissed || !S || S.won || replay.active) return;
+  $("btn-deadend-undo").disabled = !S.history.length;
+  b.hidden = false;
+}
+function buildPlanMap(initSt, moves) {
+  const map = new Map();
+  const st = SOLVER.cloneState(initSt);
+  for (let i = 0; i < moves.length; i++) {
+    const k = SOLVER.exactStateKey(st);
+    if (!map.has(k)) map.set(k, moves[i]);
+    SOLVER.applyMove(st, moves[i]);
+  }
+  return map;
+}
 
 let currentDiff = "normal";
 const usedSeeds = { normal: new Set(), hard: new Set() };
@@ -661,6 +1817,7 @@ function pickPoolSeed(diff) {
 }
 function newGame(seedOpt, diffOpt) {
   stopAuto();
+  stopReplay(false);
   const diff = diffOpt || currentDiff;
   currentDiff = diff;
   let seed, deal;
@@ -675,22 +1832,34 @@ function newGame(seedOpt, diffOpt) {
   }
   S = {
     seed, diff, tableau: deal.tableau, stock: deal.stock, waste: [], foundations: [[], [], [], []],
-    moves: 0, history: [], started: false, startTime: 0, elapsed: 0, won: false, autoTimer: null,
+    moves: 0, redeals: 0, history: [], started: false, startTime: 0, elapsed: 0, won: false, autoTimer: null,
   };
-  sel = null; hintState = null;
+  sel = null; clearHint();
+  hintPlanMap = null; initialPlanMap = null; replaySolution = null;
+  hintInFlightGen = -1; hintInFlightKey = "";
+  hideDeadEndBanner();
+  gameGen++; hintGen++; deadEndGen++;
   initialSnap = snapshot();
   $("win").style.display = "none";
+  $("win-note-normal").hidden = false;
+  $("win-note-replay").hidden = true;
+  $("btn-win-return").hidden = true;
+  $("btn-replay").disabled = true;
   document.querySelectorAll(".diffs button").forEach((b) => b.classList.toggle("primary", b.dataset.diff === diff));
   setMsg(diff === "easy"
     ? t("msg_deal_easy", { seed })
     : t("msg_deal_verified", { seed, diff: diffLabel(diff) }));
   render();
+  // 開始時に初期局面の模範解答を Worker で非同期算出（かんたんで解けない場合は静かに無効維持）
+  resetMainWorker();
+  postMainJob({ type: "solveReplay", gen: gameGen, state: SOLVER.gameToSolverState(S) });
 }
 function setMsg(t) { $("msg").textContent = t || ""; }
 
 function flipTop(pile) {
   const top = pile[pile.length - 1];
-  if (top && !top.faceUp) top.faceUp = true;
+  if (top && !top.faceUp) { top.faceUp = true; return true; }
+  return false;
 }
 function movingCards(src) {
   if (src.kind === "waste") { const c = S.waste[S.waste.length - 1]; return c ? [c] : null; }
@@ -702,9 +1871,10 @@ function movingCards(src) {
   return null;
 }
 function removeFromSource(src, count) {
-  if (src.kind === "waste") S.waste.splice(S.waste.length - count, count);
-  else if (src.kind === "foundation") S.foundations[src.suit].splice(S.foundations[src.suit].length - count, count);
-  else if (src.kind === "tableau") { S.tableau[src.pile].splice(src.index, count); flipTop(S.tableau[src.pile]); }
+  if (src.kind === "waste") { S.waste.splice(S.waste.length - count, count); return false; }
+  if (src.kind === "foundation") { S.foundations[src.suit].splice(S.foundations[src.suit].length - count, count); return false; }
+  if (src.kind === "tableau") { S.tableau[src.pile].splice(src.index, count); return flipTop(S.tableau[src.pile]); }
+  return false;
 }
 function tryMove(src, dest) {
   if (S.won) return false;
@@ -719,15 +1889,22 @@ function tryMove(src, dest) {
     if (!canPlaceOnTableau(cards[0], S.tableau[dest.pile])) return false;
   } else return false;
   pushHistory(); markStarted();
-  removeFromSource(src, cards.length);
+  const flipped = removeFromSource(src, cards.length);
   if (dest.kind === "foundation") S.foundations[dest.suit].push(...cards);
   else S.tableau[dest.pile].push(...cards);
   S.moves++;
-  sel = null; hintState = null;
+  sel = null; clearHint(); hintGen++;
+  const willWin = S.foundations.reduce((a, p) => a + p.length, 0) === 52;
+  SFX.play("place");
+  if (flipped && !willWin) setTimeout(() => SFX.play("flip"), 55);
   afterAction();
   return true;
 }
-function afterAction() { checkWin(); render(); }
+function afterAction() {
+  checkWin();
+  render();
+  if (!inReplayStep && !S.autoTimer) scheduleDeadEndCheck();
+}
 function winParText() {
   const meta = S.diff !== "easy" ? POOL_META[S.seed] : null;
   if (!meta) return "";
@@ -740,9 +1917,24 @@ function checkWin() {
   const total = S.foundations.reduce((a, p) => a + p.length, 0);
   if (total === 52 && !S.won) {
     S.won = true; S.elapsed = S.started ? Date.now() - S.startTime : 0; stopAuto();
+    hideDeadEndBanner();
+    deadEndGen++;
+    if (replay.active) {
+      if (replay.timer) { clearTimeout(replay.timer); replay.timer = null; }
+      replay.playing = false;
+      updateReplayUI();
+      $("win-note-normal").hidden = true;
+      $("win-note-replay").hidden = false;
+      $("btn-win-return").hidden = false;
+    } else {
+      $("win-note-normal").hidden = false;
+      $("win-note-replay").hidden = true;
+      $("btn-win-return").hidden = true;
+    }
     $("win-detail").textContent = t("win_detail", { seed: S.seed, moves: S.moves, time: fmtTime(S.elapsed) });
     $("win-par").textContent = winParText();
     $("win").style.display = "flex";
+    setTimeout(() => SFX.play("win"), 60);
     confetti();
   }
 }
@@ -766,12 +1958,16 @@ function drawStock() {
   if (S.stock.length) {
     pushHistory(); markStarted();
     const c = S.stock.pop(); c.faceUp = true; S.waste.push(c); S.moves++;
-    sel = null; afterAction();
+    sel = null; clearHint(); hintGen++;
+    SFX.play("flip");
+    afterAction();
   } else if (S.waste.length) {
     pushHistory(); markStarted();
     S.stock = S.waste.slice().reverse().map((c) => ({ suit: c.suit, rank: c.rank, faceUp: false }));
-    S.waste = []; S.moves++;
-    sel = null; setMsg(t("msg_stock_recycled"));
+    S.waste = []; S.moves++; S.redeals = (S.redeals || 0) + 1;
+    sel = null; clearHint(); hintGen++;
+    if (!inReplayStep) setMsg(t("msg_stock_recycled"));
+    SFX.play("flip");
     afterAction();
   }
 }
@@ -788,49 +1984,319 @@ function autoMove(src) {
   }
   return false;
 }
-function findHint() {
-  const msgs = [];
-  for (let p = 0; p < 7; p++) {
-    const pile = S.tableau[p], top = pile[pile.length - 1];
-    if (top && pile.length > 1 && !pile[pile.length - 2].faceUp && canPlaceOnFoundation(top, S.foundations[top.suit]))
-      return { src: { kind: "tableau", pile: p, index: pile.length - 1 }, dest: { kind: "foundation", suit: top.suit }, text: t("hint_to_foundation_flip", { card: cardName(top) }) };
+
+/* ==== 完璧なヒント（ソルバー＋解法キャッシュ） ==== */
+function solverMoveToHint(mv) {
+  if (!mv) return null;
+  if (mv.t === "D") {
+    if (!S.stock.length) return null;
+    return { src: null, dest: null, action: "stock", text: t("hint_draw_stock") };
   }
-  for (let p = 0; p < 7; p++) {
-    const pile = S.tableau[p];
-    for (let i = 1; i < pile.length; i++) {
-      if (pile[i - 1].faceUp || !isValidRun(pile.slice(i))) continue;
-      for (let d = 0; d < 7; d++) {
-        if (d !== p && canPlaceOnTableau(pile[i], S.tableau[d]))
-          return { src: { kind: "tableau", pile: p, index: i }, dest: { kind: "tableau", pile: d }, text: t("hint_move_stack_flip", { card: cardName(pile[i]) }) };
-      }
-    }
+  if (mv.t === "R") {
+    if (S.stock.length || !S.waste.length) return null;
+    return { src: null, dest: null, action: "stock", text: t("hint_recycle_stock") };
   }
-  const wtop = S.waste[S.waste.length - 1];
-  if (wtop && canPlaceOnFoundation(wtop, S.foundations[wtop.suit]))
-    return { src: { kind: "waste" }, dest: { kind: "foundation", suit: wtop.suit }, text: t("hint_waste_to_foundation", { card: cardName(wtop) }) };
-  for (let p = 0; p < 7; p++) {
-    const pile = S.tableau[p], top = pile[pile.length - 1];
-    if (top && canPlaceOnFoundation(top, S.foundations[top.suit]))
-      return { src: { kind: "tableau", pile: p, index: pile.length - 1 }, dest: { kind: "foundation", suit: top.suit }, text: t("hint_to_foundation", { card: cardName(top) }) };
+  if (mv.t === "WF") {
+    const wtop = S.waste[S.waste.length - 1];
+    if (!wtop || !canPlaceOnFoundation(wtop, S.foundations[wtop.suit])) return null;
+    return { src: { kind: "waste" }, dest: { kind: "foundation", suit: wtop.suit }, action: null, text: t("hint_waste_to_foundation", { card: cardName(wtop) }) };
   }
-  if (wtop) for (let d = 0; d < 7; d++)
-    if (canPlaceOnTableau(wtop, S.tableau[d]))
-      return { src: { kind: "waste" }, dest: { kind: "tableau", pile: d }, text: t("hint_waste_to_tableau", { card: cardName(wtop) }) };
-  for (let p = 0; p < 7; p++) {
-    const pile = S.tableau[p];
-    for (let i = 0; i < pile.length; i++) {
-      if (!isValidRun(pile.slice(i))) continue;
-      for (let d = 0; d < 7; d++) {
-        if (d === p || !canPlaceOnTableau(pile[i], S.tableau[d])) continue;
-        if (i === 0 && S.tableau[d].length === 0) continue;
-        return { src: { kind: "tableau", pile: p, index: i }, dest: { kind: "tableau", pile: d }, text: t("hint_move_stack", { card: cardName(pile[i]) }) };
-      }
-    }
+  if (mv.t === "TF") {
+    const pile = S.tableau[mv.pile], top = pile && pile[pile.length - 1];
+    if (!top || !top.faceUp || !canPlaceOnFoundation(top, S.foundations[top.suit])) return null;
+    const flips = pile.length > 1 && !pile[pile.length - 2].faceUp;
+    return {
+      src: { kind: "tableau", pile: mv.pile, index: pile.length - 1 },
+      dest: { kind: "foundation", suit: top.suit },
+      action: null,
+      text: t(flips ? "hint_to_foundation_flip" : "hint_to_foundation", { card: cardName(top) }),
+    };
   }
-  if (S.stock.length) return { src: null, dest: null, text: t("hint_draw_stock") };
-  if (S.waste.length) return { src: null, dest: null, text: t("hint_stock_empty") };
-  return { src: null, dest: null, text: t("hint_none", { undo: t("btn_undo") }) };
+  if (mv.t === "WT") {
+    const wtop = S.waste[S.waste.length - 1];
+    if (!wtop || !canPlaceOnTableau(wtop, S.tableau[mv.dest])) return null;
+    return { src: { kind: "waste" }, dest: { kind: "tableau", pile: mv.dest }, action: null, text: t("hint_waste_to_tableau", { card: cardName(wtop) }) };
+  }
+  if (mv.t === "TT") {
+    const pile = S.tableau[mv.src];
+    const cards = pile && pile.slice(mv.idx);
+    if (!cards || !cards.length || !isValidRun(cards) || !canPlaceOnTableau(cards[0], S.tableau[mv.dest])) return null;
+    const flips = mv.idx > 0 && !pile[mv.idx - 1].faceUp;
+    return {
+      src: { kind: "tableau", pile: mv.src, index: mv.idx },
+      dest: { kind: "tableau", pile: mv.dest },
+      action: null,
+      text: t(flips ? "hint_move_stack_flip" : "hint_move_stack", { card: cardName(cards[0]) }),
+    };
+  }
+  if (mv.t === "FT") {
+    const fp = S.foundations[mv.suit], top = fp && fp[fp.length - 1];
+    if (!top || !canPlaceOnTableau(top, S.tableau[mv.dest])) return null;
+    return {
+      src: { kind: "foundation", suit: mv.suit },
+      dest: { kind: "tableau", pile: mv.dest },
+      action: null,
+      text: t("hint_found_to_tableau", { card: cardName(top) }),
+    };
+  }
+  return null;
 }
+
+function showHintObj(h) {
+  clearHint();
+  hintState = h;
+  setMsg(h.text);
+  render();
+  hintTimer = setTimeout(() => {
+    hintTimer = null;
+    if (hintState) { hintState = null; render(); }
+  }, 2600);
+}
+
+function requestPerfectHint() {
+  if (!S || S.won || replay.active || S.autoTimer) return;
+  const st = SOLVER.gameToSolverState(S);
+  const key = SOLVER.exactStateKey(st);
+  let cachedMv = hintPlanMap ? hintPlanMap.get(key) : null;
+  if (!cachedMv && initialPlanMap && initialPlanMap.has(key)) {
+    hintPlanMap = initialPlanMap;
+    cachedMv = initialPlanMap.get(key);
+  }
+  if (cachedMv) {
+    const h = solverMoveToHint(cachedMv);
+    if (h) { showHintObj(h); return; }
+    hintPlanMap = null;
+  }
+  if (hintInFlightGen === hintGen && hintInFlightKey === key && (mainWorkerBusy || queuedMainJobs.some((j) => j.type === "solveHint"))) {
+    return;
+  }
+  // キャッシュ外（解法から外れた／未探索）なら Worker で再探索する（当てずっぽうは出さない）
+  hintPlanMap = null;
+  clearHint();
+  render();
+  hintGen++;
+  const reqGen = hintGen;
+  if (!canUseWorkers()) {
+    setMsg(t("hint_not_found"));
+    return;
+  }
+  hintInFlightGen = reqGen;
+  hintInFlightKey = key;
+  setMsg(t("hint_searching"));
+  if (!postMainJob({ type: "solveHint", gen: reqGen, state: st })) {
+    hintInFlightGen = -1;
+    hintInFlightKey = "";
+    setMsg(t("hint_not_found"));
+  }
+}
+
+function handleHintSolved(gen, res) {
+  if (gen !== hintGen || !S || S.won || replay.active) return;
+  hintInFlightGen = -1;
+  hintInFlightKey = "";
+  if (res && res.status === "solved" && res.moves && res.moves.length > 0) {
+    const curSt = SOLVER.gameToSolverState(S);
+    const h = solverMoveToHint(res.moves[0]);
+    if (h) {
+      hintPlanMap = buildPlanMap(curSt, res.moves);
+      showHintObj(h);
+      return;
+    }
+  }
+  clearHint();
+  setMsg(t("hint_not_found"));
+  render();
+}
+
+/* ==== バックグラウンド詰みチェック ==== */
+function scheduleDeadEndCheck() {
+  hideDeadEndBanner();
+  deadEndGen++;
+  if (!S || S.won || replay.active || S.autoTimer) return;
+  const st = SOLVER.gameToSolverState(S);
+  const key = SOLVER.exactStateKey(st);
+  if ((hintPlanMap && hintPlanMap.has(key)) || (initialPlanMap && initialPlanMap.has(key))) return;
+  if (!canUseWorkers()) return;
+  postDeadEndJob({ type: "checkDeadEnd", gen: deadEndGen, state: st });
+}
+function handleDeadEndResult(gen, res) {
+  if (gen !== deadEndGen || !S || S.won || replay.active) return;
+  if (res && res.status === "exhausted") showDeadEndBanner();
+}
+
+/* ==== 模範解答リプレイ ==== */
+function handleReplaySolved(gen, res) {
+  if (gen !== gameGen || !S) return;
+  if (res && res.status === "solved" && res.moves && res.moves.length > 0) {
+    replaySolution = res.moves;
+    initialPlanMap = buildPlanMap(SOLVER.gameToSolverState({
+      tableau: JSON.parse(initialSnap).t,
+      stock: JSON.parse(initialSnap).s,
+      waste: [],
+      foundations: [[], [], [], []],
+      redeals: 0,
+    }), res.moves);
+    if (!replay.active) $("btn-replay").disabled = false;
+  } else {
+    replaySolution = null;
+    $("btn-replay").disabled = true;
+  }
+}
+
+function applySolverMoveInGame(mv) {
+  if (!mv) return false;
+  if (mv.t === "D" || mv.t === "R") { drawStock(); return true; }
+  if (mv.t === "WF") {
+    const c = S.waste[S.waste.length - 1];
+    return !!c && tryMove({ kind: "waste" }, { kind: "foundation", suit: c.suit });
+  }
+  if (mv.t === "TF") {
+    const pile = S.tableau[mv.pile], c = pile && pile[pile.length - 1];
+    return !!c && tryMove({ kind: "tableau", pile: mv.pile, index: pile.length - 1 }, { kind: "foundation", suit: c.suit });
+  }
+  if (mv.t === "WT") return tryMove({ kind: "waste" }, { kind: "tableau", pile: mv.dest });
+  if (mv.t === "TT") return tryMove({ kind: "tableau", pile: mv.src, index: mv.idx }, { kind: "tableau", pile: mv.dest });
+  if (mv.t === "FT") return tryMove({ kind: "foundation", suit: mv.suit }, { kind: "tableau", pile: mv.dest });
+  return false;
+}
+
+function replayDelayMs() {
+  return replay.speed === 4 ? 130 : replay.speed === 2 ? 300 : 650;
+}
+function updateReplayUI() {
+  const bar = $("replay-bar");
+  if (!bar) return;
+  bar.hidden = !replay.active;
+  if (!replay.active) return;
+  $("replay-progress").textContent = replay.idx + " / " + replay.moves.length;
+  const toggleBtn = $("btn-replay-toggle");
+  if (toggleBtn) toggleBtn.textContent = t(replay.playing ? "replay_pause" : "replay_play");
+  document.querySelectorAll(".replay-speeds button").forEach((b) => {
+    b.classList.toggle("active", +b.dataset.speed === replay.speed);
+  });
+}
+function scheduleNextReplayStep() {
+  if (replay.timer) { clearTimeout(replay.timer); replay.timer = null; }
+  if (!replay.active || !replay.playing) return;
+  replay.timer = setTimeout(stepReplay, replayDelayMs());
+}
+function stepReplay() {
+  replay.timer = null;
+  if (!replay.active || !replay.playing) return;
+  if (replay.idx >= replay.moves.length || S.won) {
+    replay.playing = false;
+    updateReplayUI();
+    return;
+  }
+  const mv = replay.moves[replay.idx];
+  inReplayStep = true;
+  const ok = applySolverMoveInGame(mv);
+  inReplayStep = false;
+  if (!ok) {
+    stopReplay(true);
+    return;
+  }
+  replay.idx++;
+  updateReplayUI();
+  if (S.won || replay.idx >= replay.moves.length) {
+    replay.playing = false;
+    updateReplayUI();
+    return;
+  }
+  setMsg(t("replay_playing", { step: replay.idx, total: replay.moves.length }));
+  scheduleNextReplayStep();
+}
+function startReplay() {
+  if (!S || !replaySolution || !replaySolution.length || replay.active) return;
+  stopAuto();
+  clearHint();
+  hintGen++;
+  sel = null;
+  const pausedElapsed = S.started && !S.won ? Date.now() - S.startTime : (S.elapsed || 0);
+  replayBackup = {
+    snap: snapshot(),
+    history: S.history.slice(),
+    started: S.started,
+    pausedElapsed,
+    won: S.won,
+    msg: $("msg").textContent,
+    deadEndProven,
+  };
+  hideDeadEndBanner();
+  $("win").style.display = "none";
+  S.history = []; S.started = false; S.elapsed = 0; S.won = false;
+  restore(initialSnap);
+  replay.active = true;
+  replay.playing = true;
+  replay.idx = 0;
+  replay.moves = replaySolution.slice();
+  setMsg(t("replay_playing", { step: 0, total: replay.moves.length }));
+  updateReplayUI();
+  render();
+  scheduleNextReplayStep();
+}
+function toggleReplayPause() {
+  if (!replay.active) return;
+  if (replay.playing) {
+    replay.playing = false;
+    if (replay.timer) { clearTimeout(replay.timer); replay.timer = null; }
+    setMsg(t("replay_paused", { step: replay.idx, total: replay.moves.length }));
+    updateReplayUI();
+  } else {
+    if (replay.idx >= replay.moves.length || S.won) {
+      $("win").style.display = "none";
+      S.history = []; S.started = false; S.elapsed = 0; S.won = false;
+      restore(initialSnap);
+      replay.idx = 0;
+    }
+    replay.playing = true;
+    setMsg(t("replay_playing", { step: replay.idx, total: replay.moves.length }));
+    updateReplayUI();
+    render();
+    scheduleNextReplayStep();
+  }
+}
+function setReplaySpeed(spd) {
+  replay.speed = (spd === 2 || spd === 4) ? spd : 1;
+  updateReplayUI();
+  if (replay.active && replay.playing) scheduleNextReplayStep();
+}
+function stopReplay(restoreBackup) {
+  if (replay.timer) { clearTimeout(replay.timer); replay.timer = null; }
+  const wasActive = replay.active;
+  replay.active = false;
+  replay.playing = false;
+  replay.idx = 0;
+  replay.moves = [];
+  updateReplayUI();
+  if (!wasActive) return;
+  if (restoreBackup && replayBackup && S) {
+    const bk = replayBackup;
+    replayBackup = null;
+    restore(bk.snap);
+    S.history = bk.history;
+    S.started = bk.started;
+    S.elapsed = bk.pausedElapsed;
+    S.startTime = bk.started && !bk.won ? Date.now() - bk.pausedElapsed : 0;
+    S.won = bk.won;
+    if (S.won) {
+      $("win-note-normal").hidden = false;
+      $("win-note-replay").hidden = true;
+      $("btn-win-return").hidden = true;
+      $("win-detail").textContent = t("win_detail", { seed: S.seed, moves: S.moves, time: fmtTime(S.elapsed) });
+      $("win-par").textContent = winParText();
+      $("win").style.display = "flex";
+    } else {
+      $("win").style.display = "none";
+    }
+    if (bk.deadEndProven) showDeadEndBanner();
+    setMsg(t("replay_restored"));
+    render();
+  } else {
+    replayBackup = null;
+  }
+}
+
 function stopAuto() { if (S && S.autoTimer) { clearInterval(S.autoTimer); S.autoTimer = null; } }
 function autoStep() {
   let best = null;
@@ -840,15 +2306,27 @@ function autoStep() {
   for (let p = 0; p < 7; p++) { const pile = S.tableau[p], top = pile[pile.length - 1]; if (top) consider({ kind: "tableau", pile: p, index: pile.length - 1 }, top); }
   const wtop = S.waste[S.waste.length - 1]; if (wtop) consider({ kind: "waste" }, wtop);
   if (best) {
-    removeFromSource(best.src, 1);
+    const flipped = removeFromSource(best.src, 1);
     S.foundations[best.card.suit].push(best.card);
-    S.moves++; afterAction();
+    S.moves++;
+    const willWin = S.foundations.reduce((a, p) => a + p.length, 0) === 52;
+    SFX.play("place");
+    if (flipped && !willWin) setTimeout(() => SFX.play("flip"), 45);
+    afterAction();
     if (S.won) stopAuto();
     return;
   }
-  if (S.stock.length) { const c = S.stock.pop(); c.faceUp = true; S.waste.push(c); S.moves++; render(); return; }
+  if (S.stock.length) {
+    const c = S.stock.pop(); c.faceUp = true; S.waste.push(c); S.moves++;
+    SFX.play("flip");
+    render();
+    return;
+  }
   stopAuto();
-  if (!S.won) setMsg(t("msg_auto_stopped"));
+  if (!S.won) {
+    setMsg(t("msg_auto_stopped"));
+    scheduleDeadEndCheck();
+  }
 }
 function allFaceUp() { return S.tableau.every((p) => p.every((c) => c.faceUp)); }
 
@@ -883,14 +2361,19 @@ function render() {
   $("stat-par-wrap").style.display = meta ? "" : "none";
   if (meta) { $("st-nodes").textContent = meta[0].toLocaleString(); $("st-par").textContent = meta[1]; }
   $("st-found").textContent = S.foundations.reduce((a, p) => a + p.length, 0);
-  $("btn-undo").disabled = !S.history.length;
-  $("btn-auto").disabled = S.won || !allFaceUp();
+  $("btn-undo").disabled = replay.active || !S.history.length;
+  $("btn-restart").disabled = replay.active;
+  $("btn-hint").disabled = replay.active || S.won;
+  $("btn-auto").disabled = replay.active || S.won || !allFaceUp();
+  $("btn-replay").disabled = replay.active || !replaySolution;
+  if (deadEndProven && !$("deadend-banner").hidden) $("btn-deadend-undo").disabled = !S.history.length;
 
   topRowEl.innerHTML = "";
   // 山札
   const sw = document.createElement("div");
   sw.className = "stockwrap"; sw.dataset.action = "stock";
   const ss = document.createElement("div"); ss.className = "slot";
+  if (hintState && hintState.action === "stock") ss.classList.add("hintsrc");
   if (S.stock.length) {
     const back = document.createElement("div"); back.className = "card down"; back.style.top = "0"; ss.appendChild(back);
     const badge = document.createElement("div"); badge.className = "stockcount"; badge.textContent = S.stock.length; sw.appendChild(badge);
@@ -922,6 +2405,7 @@ function render() {
     if (ftop) {
       const el = cardEl(ftop, { kind: "foundation", suit: s }); el.style.top = "0";
       if (isSelected("foundation", s)) el.classList.add("selected");
+      if (isHintSrc("foundation", s)) el.classList.add("hintsrc");
       fp.appendChild(el);
     }
     topRowEl.appendChild(fp);
@@ -984,7 +2468,8 @@ let pending = null, drag = null, lastTap = { key: "", time: 0 };
 function srcKey(src) { return src.kind + ":" + (src.pile ?? "") + ":" + (src.index ?? "") + ":" + (src.suit ?? ""); }
 
 boardEl.addEventListener("pointerdown", (e) => {
-  if (S.won) return;
+  SFX.unlock();
+  if (!S || S.won || replay.active) return;
   const stockEl = e.target.closest('[data-action="stock"]');
   pending = { x: e.clientX, y: e.clientY, src: srcFromEl(e.target.closest(".card")), stock: !!stockEl, target: e.target };
 });
@@ -1038,6 +2523,7 @@ document.addEventListener("pointerup", (e) => {
   if (drag) { endDrag(e, true); return; }
   if (!pending) return;
   const p = pending; pending = null;
+  if (replay.active) return;
   if (p.stock) { sel = null; drawStock(); return; }
   handleClick(e, p);
 });
@@ -1076,43 +2562,80 @@ function handleClick(e, p) {
 }
 boardEl.addEventListener("contextmenu", (e) => e.preventDefault());
 
+function undoOneMove() {
+  if (replay.active) return;
+  stopAuto();
+  if (!S.history.length) return;
+  hintGen++;
+  S.won = false; $("win").style.display = "none";
+  restore(S.history.pop());
+  setMsg(t("msg_undone"));
+  render();
+  scheduleDeadEndCheck();
+}
+
 $("btn-new").addEventListener("click", () => {
-  if (S.moves > 0 && !S.won && !confirm(t("confirm_discard_new"))) return;
+  SFX.unlock();
+  if (!replay.active && S.moves > 0 && !S.won && !confirm(t("confirm_discard_new"))) return;
   newGame();
 });
 $("btn-restart").addEventListener("click", () => {
-  stopAuto(); S.won = false; $("win").style.display = "none";
-  S.history = []; S.started = false; S.elapsed = 0; restore(initialSnap); setMsg(t("msg_restarted", { seed: S.seed })); render();
+  SFX.unlock();
+  if (replay.active) return;
+  stopAuto(); hintGen++; S.won = false; $("win").style.display = "none";
+  S.history = []; S.started = false; S.elapsed = 0; restore(initialSnap);
+  setMsg(t("msg_restarted", { seed: S.seed }));
+  render();
+  scheduleDeadEndCheck();
 });
-$("btn-undo").addEventListener("click", () => {
-  stopAuto();
-  if (!S.history.length) return;
-  S.won = false; $("win").style.display = "none";
-  restore(S.history.pop()); setMsg(t("msg_undone")); render();
+$("btn-undo").addEventListener("click", () => { SFX.unlock(); undoOneMove(); });
+$("btn-deadend-undo").addEventListener("click", () => { SFX.unlock(); undoOneMove(); });
+$("btn-deadend-close").addEventListener("click", () => {
+  deadEndDismissed = true;
+  $("deadend-banner").hidden = true;
 });
 $("btn-hint").addEventListener("click", () => {
-  hintState = findHint();
-  setMsg(hintState.text);
-  render();
-  setTimeout(() => { if (hintState) { hintState = null; render(); } }, 1800);
+  SFX.unlock();
+  requestPerfectHint();
 });
 $("btn-auto").addEventListener("click", () => {
+  SFX.unlock();
+  if (replay.active) return;
   if (S.autoTimer) { stopAuto(); render(); return; }
   if (!allFaceUp()) return;
+  hintGen++;
+  clearHint();
   pushHistory();
   S.autoTimer = setInterval(autoStep, 110);
 });
-$("btn-win-new").addEventListener("click", () => newGame());
+$("btn-replay").addEventListener("click", () => { SFX.unlock(); startReplay(); });
+$("btn-replay-toggle").addEventListener("click", () => { SFX.unlock(); toggleReplayPause(); });
+$("btn-replay-stop").addEventListener("click", () => { SFX.unlock(); stopReplay(true); });
+$("btn-win-return").addEventListener("click", () => { SFX.unlock(); stopReplay(true); });
+document.querySelectorAll(".replay-speeds button").forEach((b) => {
+  b.addEventListener("click", () => { SFX.unlock(); setReplaySpeed(+b.dataset.speed); });
+});
+$("btn-win-new").addEventListener("click", () => { SFX.unlock(); newGame(); });
 document.querySelectorAll(".diffs button").forEach((b) => {
   b.addEventListener("click", () => {
+    SFX.unlock();
     if (b.dataset.diff === currentDiff) { newGame(); return; }
-    if (S && S.moves > 0 && !S.won && !confirm(t("confirm_discard_diff", { diff: diffLabel(b.dataset.diff) }))) return;
+    if (!replay.active && S && S.moves > 0 && !S.won && !confirm(t("confirm_discard_diff", { diff: diffLabel(b.dataset.diff) }))) return;
     newGame(null, b.dataset.diff);
   });
 });
 
+$("btn-mute").addEventListener("click", () => {
+  SFX.setMuted(!SFX.isMuted());
+  SFX.unlock();
+});
+$("vol-slider").addEventListener("input", (e) => {
+  SFX.setVolume((+e.target.value) / 100);
+  SFX.unlock();
+});
+
 setInterval(() => {
-  if (S && S.started && !S.won) $("st-time").textContent = fmtTime(Date.now() - S.startTime);
+  if (S && S.started && !S.won && !replay.active) $("st-time").textContent = fmtTime(Date.now() - S.startTime);
   else if (S) $("st-time").textContent = fmtTime(S.elapsed || 0);
 }, 500);
 
