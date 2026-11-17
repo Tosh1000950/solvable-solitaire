@@ -383,6 +383,11 @@ function createSolverEngine() {
     REPLAY_WA_FAST: { w: 3.2, maxNodes: 15000, maxMs: 500, splitMode: 1, allowFT: false, maxRedeals: 3 },
     REPLAY_WA_FULL: { w: 4.0, maxNodes: 30000, maxMs: 850, splitMode: 2, allowFT: true, maxRedeals: 4 },
     REPLAY_DFS: { maxNodes: 55000, maxMs: 1000, maxRedeals: 3, maxDepth: 2500 },
+    REPLAY_WA_S1FT: { w: 4.0, maxNodes: 60000, maxMs: 4000, splitMode: 1, allowFT: true, maxRedeals: 5 },
+    REPLAY_WA_MED: { w: 2.0, maxNodes: 40000, maxMs: 2500, splitMode: 1, allowFT: false, maxRedeals: 4 },
+    REPLAY_BEAM: { beamWidth: 800, maxDepth: 300, maxNodes: 240000, maxMs: 4500, splitMode: 1, allowFT: true, maxRedeals: 4 },
+    REPLAY_DFS_DEEP: { maxNodes: 200000, maxMs: 8000, maxRedeals: 3, maxDepth: 2500 },
+    REPLAY_DFS_REDEAL: { maxNodes: 120000, maxMs: 4500, maxRedeals: 4, maxDepth: 2500 },
     DEADEND_FAST: { w: 3.2, maxNodes: 6000, maxMs: 150, splitMode: 1, allowFT: false, maxRedeals: 4 },
     DEADEND_EXHAUST: { maxNodes: 25000, maxMs: 350 },
   };
@@ -921,8 +926,131 @@ function createSolverEngine() {
     return solveWithLimits(initSt, SOLVER_LIMITS.HINT_WA_FAST, SOLVER_LIMITS.HINT_WA_FULL, SOLVER_LIMITS.HINT_DFS);
   }
 
+  function scoreBeamReplay(st) {
+    const foundSum = st.found[0] + st.found[1] + st.found[2] + st.found[3];
+    let faceUp = 0, faceDown = 0, emptyCols = 0, runs = 0;
+    for (let p = 0; p < 7; p++) {
+      const pile = st.tab[p];
+      if (!pile.length) { emptyCols++; continue; }
+      let sawUp = false;
+      for (let i = 0; i < pile.length; i++) {
+        if (pile[i] < 64) faceDown++;
+        else {
+          faceUp++;
+          if (!sawUp) { sawUp = true; runs++; }
+        }
+      }
+    }
+    return foundSum * 10 - faceDown * 12 + emptyCols * 3 - (st.redeals || 0) * 8 + (faceUp - runs) * 0.5;
+  }
+
+  function solveBeamReplay(initSt, opts) {
+    const beamWidth = opts.beamWidth || 800;
+    const maxDepth = opts.maxDepth || 300;
+    const maxNodes = opts.maxNodes || 240000;
+    const maxMs = opts.maxMs || 4500;
+    const t0 = Date.now();
+    const rootSt = cloneState(initSt);
+    rootSt.redeals = 0;
+    const rootMvs = [];
+    autoStrictSafe(rootSt, rootMvs);
+    if (isGoal(rootSt)) return { status: "solved", moves: rootMvs, expanded: 0 };
+
+    let beam = [{
+      st: rootSt,
+      g: rootMvs.length,
+      score: scoreBeamReplay(rootSt) - rootMvs.length * 0.5,
+      parent: null,
+      mvs: rootMvs,
+    }];
+    const visited = new Map();
+    visited.set(canonHash(rootSt, true), rootMvs.length);
+    let bestSol = null;
+    let expanded = 0;
+
+    for (let depth = 0; depth < maxDepth && beam.length > 0; depth++) {
+      if (expanded >= maxNodes || Date.now() - t0 >= maxMs) {
+        return bestSol
+          ? { status: "solved", moves: reconstructMoves(bestSol), expanded }
+          : { status: "timeout", expanded };
+      }
+      const next = [];
+      for (let b = 0; b < beam.length; b++) {
+        if (expanded >= maxNodes || ((expanded & 127) === 0 && Date.now() - t0 >= maxMs)) {
+          return bestSol
+            ? { status: "solved", moves: reconstructMoves(bestSol), expanded }
+            : { status: "timeout", expanded };
+        }
+        const cur = beam[b];
+        if (isGoal(cur.st)) {
+          if (!bestSol || cur.g < bestSol.g) bestSol = cur;
+          continue;
+        }
+        expanded++;
+        const mvs = genMoves(cur.st, opts);
+        for (let k = 0; k < mvs.length; k++) {
+          const { mv, pen } = mvs[k];
+          const ns = cloneState(cur.st);
+          applyMove(ns, mv);
+          const extra = [mv];
+          autoStrictSafe(ns, extra);
+          const ng = cur.g + extra.length;
+          if (isGoal(ns)) {
+            const cand = { st: ns, g: ng, parent: cur, mvs: extra };
+            if (!bestSol || ng < bestSol.g) bestSol = cand;
+            continue;
+          }
+          const hkey = canonHash(ns, true);
+          const prev = visited.get(hkey);
+          if (prev !== undefined && prev <= ng) continue;
+          visited.set(hkey, ng);
+          next.push({
+            st: ns,
+            g: ng,
+            score: scoreBeamReplay(ns) - ng * 0.8 - pen * 0.5,
+            parent: cur,
+            mvs: extra,
+          });
+        }
+      }
+      if (bestSol) break;
+      next.sort((a, b) => b.score - a.score);
+      beam = next.slice(0, beamWidth);
+    }
+    return bestSol
+      ? { status: "solved", moves: reconstructMoves(bestSol), expanded }
+      : { status: "timeout", expanded };
+  }
+
   function solveForReplay(initSt) {
-    return solveWithLimits(initSt, SOLVER_LIMITS.REPLAY_WA_FAST, SOLVER_LIMITS.REPLAY_WA_FULL, SOLVER_LIMITS.REPLAY_DFS);
+    const t0 = Date.now();
+    const fastRes = solveWithLimits(
+      initSt,
+      SOLVER_LIMITS.REPLAY_WA_FAST,
+      SOLVER_LIMITS.REPLAY_WA_FULL,
+      SOLVER_LIMITS.REPLAY_DFS
+    );
+    if (fastRes.status === "solved") return fastRes;
+
+    // 高速ステージで漏れた盤面向けの低速・多探索戦略フォールバック（バックグラウンド専用）
+    let expanded = fastRes.expanded || 0;
+    const stages = [
+      ["waS1FT", () => solveWA(initSt, SOLVER_LIMITS.REPLAY_WA_S1FT), false],
+      ["waMed", () => solveWA(initSt, SOLVER_LIMITS.REPLAY_WA_MED), false],
+      ["beam", () => solveBeamReplay(initSt, SOLVER_LIMITS.REPLAY_BEAM), false],
+      ["dfsDeep", () => solveDFSLazy(initSt, SOLVER_LIMITS.REPLAY_DFS_DEEP), true],
+      ["dfsRedeal", () => solveDFSLazy(initSt, SOLVER_LIMITS.REPLAY_DFS_REDEAL), true],
+    ];
+    for (let i = 0; i < stages.length; i++) {
+      const [stageName, runStage, needClean] = stages[i];
+      const r = runStage();
+      expanded += r.expanded || 0;
+      if (r.status === "solved") {
+        const moves = needClean ? canonClean(initSt, r.moves) : r.moves;
+        return { status: "solved", moves, stage: stageName, expanded, ms: Date.now() - t0 };
+      }
+    }
+    return { status: "timeout", stage: "none", expanded, ms: Date.now() - t0 };
   }
 
   function checkDeadEnd(initSt) {
